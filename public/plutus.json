@@ -1,0 +1,77 @@
+{
+  "preamble": {
+    "title": "aiken/hung",
+    "description": "Aiken contracts for project 'aiken/hung'",
+    "version": "0.0.0",
+    "plutusVersion": "v3",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.1.11+7c3c5a5"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "placeholder.earn_nfts.spend",
+      "datum": {
+        "title": "datum_opt",
+        "schema": {
+          "$ref": "#/definitions/placeholder~1Datum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/placeholder~1Redeemer"
+        }
+      },
+      "compiledCode": "58b101010029800aba2aba1aab9faab9eaab9dab9a48888896600264653001300700198039804000cc01c0092225980099b8748008c01cdd500144c8cc896600266e1d2000300a375400d13232598009808001456600266e1d2000300c375400713371e6e48dd7180798069baa008375c601e601a6ea8c03cc034dd5001c5900b45900e1bae300e001300b375400d16402460160026016601800260106ea800a2c8030600e00260066ea801e29344d95900101",
+      "hash": "66934781ea8218eb221e533490f3fcfc6ba84c44596f5a7ae079d3a0"
+    },
+    {
+      "title": "placeholder.earn_nfts.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "compiledCode": "58b101010029800aba2aba1aab9faab9eaab9dab9a48888896600264653001300700198039804000cc01c0092225980099b8748008c01cdd500144c8cc896600266e1d2000300a375400d13232598009808001456600266e1d2000300c375400713371e6e48dd7180798069baa008375c601e601a6ea8c03cc034dd5001c5900b45900e1bae300e001300b375400d16402460160026016601800260106ea800a2c8030600e00260066ea801e29344d95900101",
+      "hash": "66934781ea8218eb221e533490f3fcfc6ba84c44596f5a7ae079d3a0"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "dataType": "bytes"
+    },
+    "placeholder/Datum": {
+      "title": "Datum",
+      "anyOf": [
+        {
+          "title": "Datum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "password",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "placeholder/Redeemer": {
+      "title": "Redeemer",
+      "anyOf": [
+        {
+          "title": "Redeemer",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "unlock",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
