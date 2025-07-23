@@ -10,7 +10,7 @@ export function MainContent() {
         <p className="mb-8">
           Experience the future of gaming on the Cardano blockchain
         </p>
-        <Link href="/Game">
+        <Link href="">
           <button className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-8 py-3 rounded-md font-bold">
             Start Playing Now
           </button>
