@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import Mint from "./Mint";
 
 const menu = [
   { key: "users", label: "Quản lý User", icon: "👤" },
   { key: "nfts", label: "Quản lý NFT", icon: "🖼️" },
   { key: "stats", label: "Thống kê", icon: "📊" },
+  { key: "mint", label: "Mint NFT", icon: "🪙" },
 ];
 
 const AdminDashboard = () => {
@@ -134,6 +136,21 @@ const AdminDashboard = () => {
               <p style={{ color: "#232946" }}>
                 Hiển thị thống kê tổng quan ở đây (đang phát triển).
               </p>
+            </div>
+          )}
+          {activeTab === "mint" && (
+            <div>
+              <h2
+                style={{
+                  color: "#6c47ff",
+                  fontWeight: 800,
+                  marginBottom: 16,
+                  fontSize: 24,
+                }}
+              >
+                🪙 Mint NFT
+              </h2>
+              <Mint />
             </div>
           )}
         </div>

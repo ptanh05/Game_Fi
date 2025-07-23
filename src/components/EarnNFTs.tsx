@@ -17,19 +17,16 @@ import { useWalletContext } from "~/context/WalletContext";
 import { mConStr0, stringToHex } from "@meshsdk/core";
 import { getScript, getTxBuilder, getUtxoByTxHash } from "~/contract/Contract";
 
-
 // Ở đầu file EarnNFTs.tsx, sau các import khác
-async function updateNFTStatus(txhash: string, new_status: string): Promise<any> {
+async function updateNFTStatus(
+  txhash: string,
+  new_status: string
+): Promise<any> {
   try {
-    const response = await fetch("http://localhost/earnnfts/updateNFTStatus.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        txhash,
-        new_status,
-      }),
+    const response = await fetch("/api/inventory/nfts_cache", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ txhash, status: new_status }),
     });
     const data = await response.json();
     if (data.error) {
@@ -40,7 +37,6 @@ async function updateNFTStatus(txhash: string, new_status: string): Promise<any>
     console.error("Error updating NFT status:", error);
   }
 }
-
 
 // Banner data
 const bannerData = [
@@ -55,9 +51,18 @@ const bannerData = [
       description: "Best weapon for beginners",
     },
     featuredEpics: [
-      { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-      { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-      { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
+      {
+        name: "Sword",
+        image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+      },
+      {
+        name: "Sword",
+        image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+      },
+      {
+        name: "Sword",
+        image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+      },
     ],
     iconImage: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
     themeColor: "from-indigo-600 to-cyan-600",
@@ -66,33 +71,67 @@ const bannerData = [
     buttonHoverColor: "from-indigo-600 to-cyan-700",
     itemDetails: {
       Legendary: [
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
       ],
       Epic: [
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
       ],
       Rare: [
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
       ],
       Common: [
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
-        { name: "Sword", image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy" },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
+        {
+          name: "Sword",
+          image: "bafkreicafiaqog5t3xgw42xnvu7vueyfwzu5bsejfiyox3ncornpkrxezy",
+        },
       ],
     },
   },
 ];
 
 async function fetchNFTsFromDB() {
-  const res = await fetch("http://localhost/earnnfts/getNFTs.php");
+  const res = await fetch("/api/inventory/nfts_cache");
   const data = await res.json();
-  return data.data.pets; // lấy pets
+  // Giả sử data là mảng NFT, phân loại theo rarity
+  const pets = { Legendary: [], Epic: [], Rare: [], Common: [] };
+  data.forEach((nft: any) => {
+    if (pets[nft.rarity]) pets[nft.rarity].push(nft);
+  });
+  return pets;
 }
-
 
 //////////////////////////////////////////
 // Wish Animation Component
@@ -106,7 +145,11 @@ interface WishAnimationProps {
   onSubmit: (txHashes: string[]) => void;
   updateUserData: (updatedData: any, newHistory?: any) => void;
   userKeys: number;
-  userPity: { current: number; guaranteedEpic: number; guaranteedLegendary: number };
+  userPity: {
+    current: number;
+    guaranteedEpic: number;
+    guaranteedLegendary: number;
+  };
   activeBanner: any;
 }
 
@@ -148,7 +191,8 @@ function WishAnimation({
       : null;
 
   const isLegendaryAnimation = rarestItem?.rarity === "Legendary";
-  const isEpicAnimation = !isLegendaryAnimation && rarestItem?.rarity === "Epic";
+  const isEpicAnimation =
+    !isLegendaryAnimation && rarestItem?.rarity === "Epic";
   const isRareAnimation =
     !isLegendaryAnimation && !isEpicAnimation && rarestItem?.rarity === "Rare";
 
@@ -215,12 +259,14 @@ function WishAnimation({
       if (rewards.length === 1) {
         try {
           // Đã processing từ trước đó, chỉ cần submit transaction
-        await onSubmit([rewards[0].txhash]);
-        // await Promise.all(rewards.map((reward) => updateNFTStatus(reward.txhash, "remove")));
-        onClose();
+          await onSubmit([rewards[0].txhash]);
+          // await Promise.all(rewards.map((reward) => updateNFTStatus(reward.txhash, "remove")));
+          onClose();
         } catch (error) {
           // console.error("Error processing rewards:", error);
-          await Promise.all(rewards.map((reward) => updateNFTStatus(reward.txhash, "available")));
+          await Promise.all(
+            rewards.map((reward) => updateNFTStatus(reward.txhash, "available"))
+          );
         }
       } else {
         setShowSummary(true);
@@ -233,17 +279,18 @@ function WishAnimation({
     try {
       // Đã processing từ trước đó, chỉ cần submit transaction
       await onSubmit(txHashes);
-  
+
       // Xóa khỏi cache sau khi hoàn thành giao dịch
       //  await Promise.all(rewards.map((reward) => updateNFTStatus(reward.txhash, "remove")));
-  
+
       onClose();
     } catch (error) {
       // console.error("Error processing rewards:", error);
-      await Promise.all(rewards.map((reward) => updateNFTStatus(reward.txhash, "available")));
+      await Promise.all(
+        rewards.map((reward) => updateNFTStatus(reward.txhash, "available"))
+      );
     }
   };
-  
 
   const handleSkip = () => {
     clearAllAnimationTimers();
@@ -324,7 +371,10 @@ function WishAnimation({
     : "bg-gray-400";
 
   return (
-    <div ref={animationRef} className="fixed inset-0 bg-black flex items-center justify-center z-50">
+    <div
+      ref={animationRef}
+      className="fixed inset-0 bg-black flex items-center justify-center z-50"
+    >
       {/* Animation Background */}
       <div className="absolute inset-0 overflow-hidden bg-gray-900">
         <div className="stars-container">
@@ -336,7 +386,8 @@ function WishAnimation({
                 className={`absolute rounded-full transition-colors duration-500 ${
                   revealRarity
                     ? animationStage >= 5 && currentReward && !showSummary
-                      ? getCurrentRarityColors(currentReward.rarity).particleColor
+                      ? getCurrentRarityColors(currentReward.rarity)
+                          .particleColor
                       : particleColor
                     : "bg-white"
                 }`}
@@ -382,7 +433,11 @@ function WishAnimation({
         <div
           ref={chestRef}
           className={`relative w-40 h-40 ${
-            animationStage >= 3 ? "animate-chest-shake" : animationStage >= 2 ? "animate-pulse" : "animate-fadeIn"
+            animationStage >= 3
+              ? "animate-chest-shake"
+              : animationStage >= 2
+              ? "animate-pulse"
+              : "animate-fadeIn"
           }`}
         >
           <div className="w-full h-full relative">
@@ -393,7 +448,9 @@ function WishAnimation({
           {animationStage >= 2 && (
             <div
               className={`absolute -inset-8 bg-gradient-radial ${
-                revealRarity ? glowColor : "from-white/0 via-white/30 to-white/0"
+                revealRarity
+                  ? glowColor
+                  : "from-white/0 via-white/30 to-white/0"
               } rounded-full animate-pulse-slow z-0`}
             ></div>
           )}
@@ -422,7 +479,9 @@ function WishAnimation({
                 ))}
             </>
           )}
-          {animationStage === 4 && <div className="absolute inset-0 bg-white animate-flash z-10"></div>}
+          {animationStage === 4 && (
+            <div className="absolute inset-0 bg-white animate-flash z-10"></div>
+          )}
         </div>
       )}
 
@@ -430,16 +489,25 @@ function WishAnimation({
         <div className="flex flex-col items-center animate-fadeIn z-10">
           <div className="relative w-64 h-64 mb-6">
             <Image
-              src={`https://gateway.pinata.cloud/ipfs/${currentReward.image}` || "/placeholder.svg"}
+              src={
+                `https://gateway.pinata.cloud/ipfs/${currentReward.image}` ||
+                "/placeholder.svg"
+              }
               alt={currentReward.name}
               fill
               className="object-contain animate-float"
             />
             <div
-              className={`absolute -inset-4 bg-gradient-radial ${getCurrentRarityColors(currentReward.rarity).glowColor} rounded-full -z-10 opacity-70 animate-pulse-slow`}
+              className={`absolute -inset-4 bg-gradient-radial ${
+                getCurrentRarityColors(currentReward.rarity).glowColor
+              } rounded-full -z-10 opacity-70 animate-pulse-slow`}
             ></div>
           </div>
-          <h3 className={`text-3xl font-bold mb-3 ${getRarityColor(currentReward.rarity)} animate-fadeIn-delay`}>
+          <h3
+            className={`text-3xl font-bold mb-3 ${getRarityColor(
+              currentReward.rarity
+            )} animate-fadeIn-delay`}
+          >
             {currentReward.name}
           </h3>
           <div
@@ -459,7 +527,11 @@ function WishAnimation({
             onClick={handleNext}
             className="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-8 py-3 rounded-md font-medium hover:from-purple-700 hover:to-purple-900 transition-all duration-300 animate-fadeIn-delay-3"
           >
-            {currentRewardIndex < rewards.length - 1 ? "Next" : rewards.length === 1 ? "Done" : "View All"}
+            {currentRewardIndex < rewards.length - 1
+              ? "Next"
+              : rewards.length === 1
+              ? "Done"
+              : "View All"}
           </button>
         </div>
       )}
@@ -468,7 +540,9 @@ function WishAnimation({
         <div className="flex flex-col items-center z-10 w-full max-w-4xl p-4 animate-fadeIn">
           <h2 className="text-3xl font-bold mb-6 text-center">
             <span className="text-white">Your Rewards</span>
-            <span className="text-gray-400 text-xl ml-2">({rewards.length} items)</span>
+            <span className="text-gray-400 text-xl ml-2">
+              ({rewards.length} items)
+            </span>
           </h2>
           <div className="w-full px-4 mb-6">
             <div className="grid grid-cols-5 gap-4">
@@ -487,14 +561,25 @@ function WishAnimation({
                       } rounded-full animate-pulse-slow`}
                     ></div>
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={item.name}
                       fill
                       className="object-contain"
                     />
                   </div>
-                  <p className={`${getRarityColor(item.rarity)} text-sm font-medium text-center`}>{item.name}</p>
-                  <span className={`text-xs ${getRarityColor(item.rarity)}`}>{item.rarity}</span>
+                  <p
+                    className={`${getRarityColor(
+                      item.rarity
+                    )} text-sm font-medium text-center`}
+                  >
+                    {item.name}
+                  </p>
+                  <span className={`text-xs ${getRarityColor(item.rarity)}`}>
+                    {item.rarity}
+                  </span>
                 </div>
               ))}
             </div>
@@ -515,14 +600,25 @@ function WishAnimation({
                         } rounded-full animate-pulse-slow`}
                       ></div>
                       <Image
-                        src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                        src={
+                          `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                          "/placeholder.svg"
+                        }
                         alt={item.name}
                         fill
                         className="object-contain"
                       />
                     </div>
-                    <p className={`${getRarityColor(item.rarity)} text-sm font-medium text-center`}>{item.name}</p>
-                    <span className={`text-xs ${getRarityColor(item.rarity)}`}>{item.rarity}</span>
+                    <p
+                      className={`${getRarityColor(
+                        item.rarity
+                      )} text-sm font-medium text-center`}
+                    >
+                      {item.name}
+                    </p>
+                    <span className={`text-xs ${getRarityColor(item.rarity)}`}>
+                      {item.rarity}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -550,7 +646,9 @@ function WishAnimation({
                   left: "50%",
                   top: "50%",
                   transform: "translate(-50%, -50%)",
-                  animation: `particle-fly-${Math.floor(Math.random() * 4)} 1s forwards`,
+                  animation: `particle-fly-${Math.floor(
+                    Math.random() * 4
+                  )} 1s forwards`,
                   animationDelay: `${Math.random() * 0.5}s`,
                 }}
               />
@@ -687,7 +785,8 @@ function WishAnimation({
           100% {
             opacity: 0.7;
             height: 300px;
-            transform: translate(-50%, -100%) rotate(calc(var(--rotation) + 360deg));
+            transform: translate(-50%, -100%)
+              rotate(calc(var(--rotation) + 360deg));
           }
         }
         @keyframes flash {
@@ -829,7 +928,9 @@ function HistoryModal({ isOpen, onClose, history }: HistoryModalProps) {
                 <tr key={item.id} className="border-b border-gray-800">
                   <td className="py-3 px-4">{item.name}</td>
                   <td className="py-3 px-4 capitalize">{item.type}</td>
-                  <td className={`py-3 px-4 ${getRarityColor(item.rarity)}`}>{item.rarity}</td>
+                  <td className={`py-3 px-4 ${getRarityColor(item.rarity)}`}>
+                    {item.rarity}
+                  </td>
                   <td className="py-3 px-4 text-gray-400">
                     {new Date(item.date).toLocaleDateString()}
                   </td>
@@ -869,13 +970,18 @@ function DetailsModal({ isOpen, onClose, bannerId }: DetailsModalProps) {
         </div>
         <div className="overflow-y-auto flex-grow">
           <div className="mb-6">
-            <h4 className="text-lg font-bold text-yellow-400 mb-2">Legendary Items (1.6% Chance)</h4>
+            <h4 className="text-lg font-bold text-yellow-400 mb-2">
+              Legendary Items (1.6% Chance)
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {banner.itemDetails.Legendary.map((item, index) => (
                 <div key={index} className="flex items-center">
                   <div className="w-10 h-10 relative mr-2">
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={item.name}
                       fill
                       className="object-contain"
@@ -887,13 +993,18 @@ function DetailsModal({ isOpen, onClose, bannerId }: DetailsModalProps) {
             </div>
           </div>
           <div className="mb-6">
-            <h4 className="text-lg font-bold text-purple-400 mb-2">Epic Items (13% Chance)</h4>
+            <h4 className="text-lg font-bold text-purple-400 mb-2">
+              Epic Items (13% Chance)
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {banner.itemDetails.Epic.map((item, index) => (
                 <div key={index} className="flex items-center">
                   <div className="w-10 h-10 relative mr-2">
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={item.name}
                       fill
                       className="object-contain"
@@ -905,13 +1016,18 @@ function DetailsModal({ isOpen, onClose, bannerId }: DetailsModalProps) {
             </div>
           </div>
           <div className="mb-6">
-            <h4 className="text-lg font-bold text-blue-400 mb-2">Rare Items (35.4% Chance)</h4>
+            <h4 className="text-lg font-bold text-blue-400 mb-2">
+              Rare Items (35.4% Chance)
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {banner.itemDetails.Rare.map((item, index) => (
                 <div key={index} className="flex items-center">
                   <div className="w-10 h-10 relative mr-2">
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={item.name}
                       fill
                       className="object-contain"
@@ -923,13 +1039,18 @@ function DetailsModal({ isOpen, onClose, bannerId }: DetailsModalProps) {
             </div>
           </div>
           <div className="mb-6">
-            <h4 className="text-lg font-bold text-gray-400 mb-2">Common Items (50% Chance)</h4>
+            <h4 className="text-lg font-bold text-gray-400 mb-2">
+              Common Items (50% Chance)
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {banner.itemDetails.Common.map((item, index) => (
                 <div key={index} className="flex items-center">
                   <div className="w-10 h-10 relative mr-2">
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={item.name}
                       fill
                       className="object-contain"
@@ -946,9 +1067,13 @@ function DetailsModal({ isOpen, onClose, bannerId }: DetailsModalProps) {
               <li>Guaranteed Epic or higher item every 10 wishes</li>
               <li>Guaranteed Legendary item every 90 wishes</li>
               <li>Pity counter is shared across all banners</li>
-              <li>Featured Legendary item has a 50% chance when a Legendary is pulled</li>
               <li>
-                If the Legendary item is not the featured one, the next Legendary is guaranteed to be the featured item
+                Featured Legendary item has a 50% chance when a Legendary is
+                pulled
+              </li>
+              <li>
+                If the Legendary item is not the featured one, the next
+                Legendary is guaranteed to be the featured item
               </li>
             </ul>
           </div>
@@ -978,51 +1103,49 @@ export default function EarnNFTs() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const { wallet, address } = useWalletContext();
 
-  const activeBanner = bannerData.find((banner) => banner.id === activeBannerId) || bannerData[0];
+  const activeBanner =
+    bannerData.find((banner) => banner.id === activeBannerId) || bannerData[0];
 
   // Lấy dữ liệu người dùng từ API khi address thay đổi
   useEffect(() => {
     if (address !== "Not connected") {
-      fetch(`http://localhost/earnnfts/getUserData.php?address=${address}`)
+      fetch(`/api/inventory/users`)
         .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            console.error("Error fetching user data:", data.error);
-          } else {
-            setUserKeys(data.user.currentkeys);
-            setUserPity({
-              current: data.user.pity_current,
-              guaranteedEpic: data.user.pity_guaranteedEpic,
-              guaranteedLegendary: data.user.pity_guaranteedLegendary,
-            });
-            setUserHistory(data.history);
-          }
+        .then((users) => {
+          const data = users.find((u: any) => u.address === address);
+          if (!data) return;
+          setUserKeys(data.currentkeys);
+          setUserPity({
+            current: data.pity_current,
+            guaranteedEpic: data.pity_guaranteedEpic,
+            guaranteedLegendary: data.pity_guaranteedLegendary,
+          });
+          // Lấy lịch sử user
+          fetch(`/api/inventory/user_history?user_address=${address}`)
+            .then((res) => res.json())
+            .then((history) => setUserHistory(history));
         })
         .catch((error) => {
           console.error("Error fetching user data:", error);
         });
     } else {
-      // Nếu chưa connect hoặc disconnect thì reset dữ liệu người dùng
       setUserKeys(0);
       setUserPity({ current: 0, guaranteedEpic: 0, guaranteedLegendary: 0 });
       setUserHistory([]);
     }
   }, [address]);
 
-  // Hàm cập nhật dữ liệu người dùng lên server
+  // Hàm cập nhật dữ liệu người dùng lên Neon.tech
   const updateUserDataOnServer = (updatedData: any, newHistory?: any) => {
-    fetch("http://localhost/earnnfts/updateUserData.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
+    fetch("/api/inventory/users", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         address: address,
-        currentkeys: String(updatedData.keys),
-        pity_current: String(updatedData.pity.current),
-        pity_guaranteedEpic: String(updatedData.pity.guaranteedEpic),
-        pity_guaranteedLegendary: String(updatedData.pity.guaranteedLegendary),
-        ...(newHistory ? { new_history: JSON.stringify(newHistory) } : {}),
+        currentkeys: updatedData.keys,
+        pity_current: updatedData.pity.current,
+        pity_guaranteedEpic: updatedData.pity.guaranteedEpic,
+        pity_guaranteedLegendary: updatedData.pity.guaranteedLegendary,
       }),
     })
       .then((res) => res.json())
@@ -1030,7 +1153,23 @@ export default function EarnNFTs() {
         if (response.error) {
           console.error("Error updating user data:", response.error);
         } else {
-          console.log("User data updated:", response.message);
+          console.log("User data updated:", response);
+          // Nếu có newHistory, lưu vào bảng user_history
+          if (newHistory && Array.isArray(newHistory)) {
+            newHistory.forEach((item) => {
+              fetch("/api/inventory/user_history", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_address: address,
+                  name: item.name,
+                  type: item.type,
+                  rarity: item.rarity,
+                  date: item.date,
+                }),
+              });
+            });
+          }
         }
       })
       .catch((error) => {
@@ -1044,27 +1183,30 @@ export default function EarnNFTs() {
 
   const getNft = async (txHashes: string[]) => {
     const redeemer = "GameBlockChainNeverDie!";
-    const datum = 'dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c';
+    const datum =
+      "dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c";
     const { scriptCbor } = getScript();
     const txBuilder = getTxBuilder();
     const utxos = await wallet.getUtxos();
     console.debug("getNft called with txHashes:", txHashes);
-  
+
     for (const txHash of txHashes) {
-      const scriptUtxo = await getUtxoByTxHash("2e73d95671bc0f2904bbd68d0ae7e9d4c526df03428f048655c73aab99ffb387");
+      const scriptUtxo = await getUtxoByTxHash(
+        "2e73d95671bc0f2904bbd68d0ae7e9d4c526df03428f048655c73aab99ffb387"
+      );
       await txBuilder
         .spendingPlutusScript("V3")
-          .txIn(
-            scriptUtxo.input.txHash,
-            scriptUtxo.input.outputIndex,
-            scriptUtxo.output.amount,
-            scriptUtxo.output.address
-          )
-          .txInScript(scriptCbor)
-          .txInDatumValue(mConStr0([datum]))
-          .txInRedeemerValue(mConStr0([stringToHex(redeemer)]))
-        }
-          
+        .txIn(
+          scriptUtxo.input.txHash,
+          scriptUtxo.input.outputIndex,
+          scriptUtxo.output.amount,
+          scriptUtxo.output.address
+        )
+        .txInScript(scriptCbor)
+        .txInDatumValue(mConStr0([datum]))
+        .txInRedeemerValue(mConStr0([stringToHex(redeemer)]));
+    }
+
     const collateral = (await wallet.getCollateral())[0];
     await txBuilder
       .txInCollateral(
@@ -1075,7 +1217,7 @@ export default function EarnNFTs() {
       )
       .changeAddress(address)
       .selectUtxosFrom(utxos);
-  
+
     await txBuilder.complete();
     const unsignedTx = txBuilder.txHex;
     const signedTx = await wallet.signTx(unsignedTx);
@@ -1087,21 +1229,21 @@ export default function EarnNFTs() {
     const cost = count * 16;
     if (userKeys >= cost) {
       const pets = await fetchNFTsFromDB();
-  
+
       const allItems = [
         ...pets.Legendary,
         ...pets.Epic,
         ...pets.Rare,
         ...pets.Common,
       ];
-  
+
       const selectedRewards = [];
       const newPity = { ...userPity };
-  
+
       for (let i = 0; i < count && allItems.length > 0; i++) {
         newPity.current += 1;
         newPity.guaranteedEpic += 1;
-  
+
         let rarity = "Common";
         if (newPity.current >= 90) {
           rarity = "Legendary";
@@ -1121,22 +1263,22 @@ export default function EarnNFTs() {
             rarity = "Rare";
           }
         }
-  
+
         const possibleItems = pets[rarity as keyof typeof pets];
         if (possibleItems.length === 0) continue; // Tránh lỗi nếu rarity trống
-  
+
         const randomIndex = Math.floor(Math.random() * possibleItems.length);
         const item = possibleItems.splice(randomIndex, 1)[0];
-  
+
         selectedRewards.push(item);
         await updateNFTStatus(item.txhash, "processing"); // cập nhật trạng thái processing
       }
-  
+
       setUserKeys(userKeys - cost);
       setUserPity(newPity);
       setCurrentRewards(selectedRewards);
       setIsWishAnimationOpen(true);
-  
+
       const newHistoryItems = selectedRewards.map((item) => ({
         id: new Date().getTime() + Math.random(),
         name: item.name,
@@ -1144,12 +1286,14 @@ export default function EarnNFTs() {
         rarity: item.rarity,
         date: new Date().toISOString(),
       }));
-  
-      updateUserDataOnServer({ keys: userKeys - cost, pity: newPity }, newHistoryItems);
+
+      updateUserDataOnServer(
+        { keys: userKeys - cost, pity: newPity },
+        newHistoryItems
+      );
       setUserHistory((prevHistory) => [...newHistoryItems, ...prevHistory]);
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -1196,10 +1340,16 @@ export default function EarnNFTs() {
               >
                 <div className="relative h-32 w-full">
                   <div className="absolute inset-0"></div>
-                  <div className={`absolute inset-0 bg-gradient-to-r ${banner.themeColor} opacity-70`}></div>
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${banner.themeColor} opacity-70`}
+                  ></div>
                   <div className="absolute inset-0 p-4 flex flex-col justify-center items-center text-center">
-                    <h3 className="font-bold text-white text-lg mb-1">{banner.name}</h3>
-                    <p className="text-xs text-white text-opacity-90 line-clamp-2">{banner.description}</p>
+                    <h3 className="font-bold text-white text-lg mb-1">
+                      {banner.name}
+                    </h3>
+                    <p className="text-xs text-white text-opacity-90 line-clamp-2">
+                      {banner.description}
+                    </p>
                   </div>
                 </div>
               </button>
@@ -1226,17 +1376,27 @@ export default function EarnNFTs() {
           className="relative rounded-xl overflow-hidden mb-8 bg-gray-900 shadow-2xl shadow-black/50"
         >
           <div className="absolute inset-0 z-0 transform scale-110"></div>
-          <div className={`absolute inset-0 bg-gradient-to-r ${activeBanner.themeColor} opacity-30 z-10`}></div>
+          <div
+            className={`absolute inset-0 bg-gradient-to-r ${activeBanner.themeColor} opacity-30 z-10`}
+          ></div>
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent z-10"></div>
           <div className="relative z-20 flex flex-col md:flex-row min-h-[600px]">
             <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center">
               <div className="mb-4 flex items-center">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${activeBanner.buttonColor} flex items-center justify-center mr-3`}>
+                <div
+                  className={`w-10 h-10 rounded-full bg-gradient-to-r ${activeBanner.buttonColor} flex items-center justify-center mr-3`}
+                >
                   <Sparkles className="text-white" size={20} />
                 </div>
-                <h2 className={`text-3xl font-bold ${activeBanner.accentColor}`}>{activeBanner.name}</h2>
+                <h2
+                  className={`text-3xl font-bold ${activeBanner.accentColor}`}
+                >
+                  {activeBanner.name}
+                </h2>
               </div>
-              <p className="text-gray-300 mb-6 text-lg">{activeBanner.description}</p>
+              <p className="text-gray-300 mb-6 text-lg">
+                {activeBanner.description}
+              </p>
               <div className="mb-6">
                 <h3 className="text-sm text-gray-400 mb-3 uppercase tracking-wider font-semibold">
                   Featured Items:
@@ -1245,7 +1405,10 @@ export default function EarnNFTs() {
                   <div className="w-16 h-16 relative mr-4">
                     <div className="absolute -inset-1 bg-gradient-radial from-yellow-500/0 via-yellow-500/30 to-yellow-500/0 rounded-full animate-pulse-slow"></div>
                     <Image
-                      src={`https://gateway.pinata.cloud/ipfs/${activeBanner.featuredLegendary.image}` || "/placeholder.svg"}
+                      src={
+                        `https://gateway.pinata.cloud/ipfs/${activeBanner.featuredLegendary.image}` ||
+                        "/placeholder.svg"
+                      }
                       alt={activeBanner.featuredLegendary.name}
                       fill
                       className="object-contain"
@@ -1273,9 +1436,19 @@ export default function EarnNFTs() {
                     >
                       <div className="w-12 h-12 relative mb-2">
                         <div className="absolute -inset-1 bg-gradient-radial from-purple-500/0 via-purple-500/20 to-purple-500/0 rounded-full animate-pulse-slow"></div>
-                        <Image src={`https://gateway.pinata.cloud/ipfs/${item.image}` || "/placeholder.svg"} alt={item.name} fill className="object-contain" />
+                        <Image
+                          src={
+                            `https://gateway.pinata.cloud/ipfs/${item.image}` ||
+                            "/placeholder.svg"
+                          }
+                          alt={item.name}
+                          fill
+                          className="object-contain"
+                        />
                       </div>
-                      <p className="text-xs text-purple-400 text-center font-medium">{item.name}</p>
+                      <p className="text-xs text-purple-400 text-center font-medium">
+                        {item.name}
+                      </p>
                       <span className="text-xs bg-purple-900/50 text-purple-400 border border-purple-500 px-2 py-0.5 rounded-full mt-1">
                         Epic
                       </span>
@@ -1286,7 +1459,9 @@ export default function EarnNFTs() {
               <div className="bg-gray-800 bg-opacity-95 p-4 rounded-lg mb-6 border border-white border-2">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm font-medium">Pity Counter:</p>
-                  <p className="text-sm text-yellow-400">{userPity.current}/90</p>
+                  <p className="text-sm text-yellow-400">
+                    {userPity.current}/90
+                  </p>
                 </div>
                 <div className="w-full bg-gray-800 rounded-full h-2.5 mb-1">
                   <div
@@ -1340,7 +1515,10 @@ export default function EarnNFTs() {
                 <div className="relative h-[400px] w-[300px]">
                   <div className="absolute -inset-10 bg-gradient-radial from-yellow-500/0 via-yellow-500/10 to-yellow-500/0 rounded-full animate-pulse-slow"></div>
                   <Image
-                    src={`https://gateway.pinata.cloud/ipfs/${activeBanner.featuredLegendary.image}` || "/placeholder.svg"}
+                    src={
+                      `https://gateway.pinata.cloud/ipfs/${activeBanner.featuredLegendary.image}` ||
+                      "/placeholder.svg"
+                    }
                     alt={activeBanner.featuredLegendary.name}
                     fill
                     className="object-contain animate-float"
@@ -1380,7 +1558,9 @@ export default function EarnNFTs() {
                 </div>
                 <h3 className="font-bold text-yellow-400">Legendary: 1.6%</h3>
               </div>
-              <p className="text-sm text-gray-300">Featured Legendary has 50% chance</p>
+              <p className="text-sm text-gray-300">
+                Featured Legendary has 50% chance
+              </p>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-purple-500/50 transition-colors">
               <div className="flex items-center mb-2">
@@ -1389,7 +1569,9 @@ export default function EarnNFTs() {
                 </div>
                 <h3 className="font-bold text-purple-400">Epic: 13%</h3>
               </div>
-              <p className="text-sm text-gray-300">Featured Epics have higher drop rates</p>
+              <p className="text-sm text-gray-300">
+                Featured Epics have higher drop rates
+              </p>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-blue-500/50 transition-colors">
               <div className="flex items-center mb-2">
@@ -1398,7 +1580,9 @@ export default function EarnNFTs() {
                 </div>
                 <h3 className="font-bold text-blue-400">Rare: 35.4%</h3>
               </div>
-              <p className="text-sm text-gray-300">Uncommon items with special abilities</p>
+              <p className="text-sm text-gray-300">
+                Uncommon items with special abilities
+              </p>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-gray-500/50 transition-colors">
               <div className="flex items-center mb-2">
@@ -1407,7 +1591,9 @@ export default function EarnNFTs() {
                 </div>
                 <h3 className="font-bold text-gray-400">Common: 50%</h3>
               </div>
-              <p className="text-sm text-gray-300">Basic items with standard abilities</p>
+              <p className="text-sm text-gray-300">
+                Basic items with standard abilities
+              </p>
             </div>
           </div>
         </div>
@@ -1423,9 +1609,12 @@ export default function EarnNFTs() {
                 <Trophy size={24} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold mb-2 text-lg">Complete Daily Quests</h3>
+                <h3 className="font-bold mb-2 text-lg">
+                  Complete Daily Quests
+                </h3>
                 <p className="text-sm text-gray-300">
-                  Earn up to 60 keys per day by completing daily quests and challenges
+                  Earn up to 60 keys per day by completing daily quests and
+                  challenges
                 </p>
                 <button className="mt-3 text-purple-400 hover:text-purple-300 flex items-center text-sm font-medium">
                   Go to Quests <ChevronRight size={16} className="ml-1" />
@@ -1460,8 +1649,16 @@ export default function EarnNFTs() {
         userPity={userPity}
         activeBanner={activeBanner}
       />
-      <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={userHistory} />
-      <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} bannerId={activeBannerId} />
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        history={userHistory}
+      />
+      <DetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        bannerId={activeBannerId}
+      />
 
       <style jsx global>{`
         @keyframes fadeIn {
@@ -1592,7 +1789,8 @@ export default function EarnNFTs() {
           100% {
             opacity: 0.7;
             height: 300px;
-            transform: translate(-50%, -100%) rotate(calc(var(--rotation) + 360deg));
+            transform: translate(-50%, -100%)
+              rotate(calc(var(--rotation) + 360deg));
           }
         }
         @keyframes flash {
