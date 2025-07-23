@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { useContractContext } from "../context/ContractContext";
 import { useWalletContext } from "~/context/WalletContext";
+import { useMarketContext } from "~/context/MarketplaceContext";
 
 type NFT = {
   unit: number;
@@ -29,17 +30,13 @@ type NFTsModalProps = {
   action: "buy" | "sell" | "refund" | "update";
 };
 
-export function NFTsModal({
-  isOpen,
-  onClose,
-  nft,
-  action,
-}: NFTsModalProps) {  
+export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
   const [showActionForm, setShowActionForm] = useState(false);
   const [newPrice, setNewPrice] = useState("");
 
   const { contract } = useContractContext();
   const { wallet } = useWalletContext();
+  const { getGameNFTs } = useMarketContext();
 
   useEffect(() => {
     if (isOpen) {
@@ -53,11 +50,9 @@ export function NFTsModal({
     mpConsume: nft.MPConsume,
     atkSpeed: (nft.ATKSpeed / 1000).toFixed(2),
     critRate: (nft.CritRate / 100).toFixed(2),
-    rechargeable: nft.Rechargeable==0 ? false : true,
-    multiShoot: nft.MultiShoot==0 ? false : true,
+    rechargeable: nft.Rechargeable == 0 ? false : true,
+    multiShoot: nft.MultiShoot == 0 ? false : true,
   });
-
-
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -71,12 +66,16 @@ export function NFTsModal({
         return "text-gray-400";
     }
   };
-  
+
   const handleActionButtonClick = () => {
     setShowActionForm(true);
   };
 
-  const shortenUnit = (unit: string | number, startChars = 6, endChars = 4): string => {
+  const shortenUnit = (
+    unit: string | number,
+    startChars = 6,
+    endChars = 4
+  ): string => {
     const strUnit = String(unit);
     if (strUnit.length <= startChars + endChars) return strUnit;
     return `${strUnit.slice(0, startChars)}...${strUnit.slice(-endChars)}`;
@@ -87,36 +86,38 @@ export function NFTsModal({
       // Convert the provided price (in ADA) to lovelace (assuming 1 ADA = 1,000,000 lovelace)
       const priceADA = parseFloat(newPrice);
       const priceLovelace = Math.floor(priceADA * 1000000);
-  
+
       // Here we assume nft.unit holds the asset identifier. If needed, replace with a hardcoded value.
       const tx = await contract.listAsset(String(nft.unit), priceLovelace);
       const signedTx = await wallet.signTx(tx);
       const txHash = await wallet.submitTx(signedTx);
       console.log("NFT listed for sale. Transaction hash:", txHash);
+      // Sau khi list thành công, reload marketplace
+      if (getGameNFTs) await getGameNFTs();
     } catch (error) {
       console.error("Error listing asset for sale:", error);
     }
   };
-  
+
   const handleBuyAsset = async () => {
-    const utxo = await contract.getUtxoByTxHash(nft.txhash);   
-      const tx = await contract.purchaseAsset(utxo);
+    const utxo = await contract.getUtxoByTxHash(nft.txhash);
+    const tx = await contract.purchaseAsset(utxo);
     try {
-      const signedTx = await wallet.signTx(tx); 
+      const signedTx = await wallet.signTx(tx);
       const txHash = await wallet.submitTx(signedTx);
-    console.log("NFT purchase", txHash);
+      console.log("NFT purchase", txHash);
     } catch (error) {
       console.error("Error purchasing asset:", error);
     }
   };
 
   const handleRefundAsset = async () => {
-    const utxo = await contract.getUtxoByTxHash(nft.txhash);   
-      const tx = await contract.delistAsset(utxo);
+    const utxo = await contract.getUtxoByTxHash(nft.txhash);
+    const tx = await contract.delistAsset(utxo);
     try {
-      const signedTx = await wallet.signTx(tx); 
+      const signedTx = await wallet.signTx(tx);
       const txHash = await wallet.submitTx(signedTx);
-    console.log("NFT purchase", txHash);
+      console.log("NFT purchase", txHash);
     } catch (error) {
       console.error("Error purchasing asset:", error);
     }
@@ -125,25 +126,25 @@ export function NFTsModal({
   const handleUpdateAsset = async () => {
     const priceADA = parseFloat(newPrice);
     const priceLovelace = Math.floor(priceADA * 1000000);
-    const utxo = await contract.getUtxoByTxHash(nft.txhash);   
-      const tx = await contract.relistAsset(utxo, priceLovelace);
+    const utxo = await contract.getUtxoByTxHash(nft.txhash);
+    const tx = await contract.relistAsset(utxo, priceLovelace);
     try {
-      const signedTx = await wallet.signTx(tx); 
+      const signedTx = await wallet.signTx(tx);
       const txHash = await wallet.submitTx(signedTx);
-    console.log("NFT purchase", txHash);
+      console.log("NFT purchase", txHash);
     } catch (error) {
       console.error("Error purchasing asset:", error);
     }
   };
 
   const handleConfirm = async () => {
-    if (action === "buy" ) {
+    if (action === "buy") {
       await handleBuyAsset();
       onClose();
     } else if (action === "sell" && newPrice) {
       await handleSellAsset();
       onClose();
-    } else if (action === "refund" ) {
+    } else if (action === "refund") {
       await handleRefundAsset();
       onClose();
     } else if (action === "update" && newPrice) {
@@ -151,7 +152,6 @@ export function NFTsModal({
       onClose();
     }
   };
-  
 
   const renderStats = (nft: NFT) => {
     const stats = getStats(nft);
@@ -189,7 +189,9 @@ export function NFTsModal({
           <div className="w-full bg-gray-700 rounded-full h-3">
             <div
               className="bg-green-500 h-3 rounded-full"
-              style={{ width: `${Math.min(100, Number(stats.atkSpeed) / 0.03)}%` }}
+              style={{
+                width: `${Math.min(100, Number(stats.atkSpeed) / 0.03)}%`,
+              }}
             ></div>
           </div>
         </div>
@@ -248,7 +250,11 @@ export function NFTsModal({
         <div className="p-6 flex flex-col md:flex-row gap-8 h-[400px]">
           <div className="relative h-full md:w-1/2 bg-gray-800 rounded-lg overflow-hidden">
             <Image
-              src={nft.image.startsWith("http") ? nft.image : `https://gateway.pinata.cloud/ipfs/${nft.image}`}
+              src={
+                nft.image.startsWith("http")
+                  ? nft.image
+                  : `https://gateway.pinata.cloud/ipfs/${nft.image}`
+              }
               alt={nft.name}
               fill
               className="object-contain"
@@ -288,7 +294,9 @@ export function NFTsModal({
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                   <div>
                     <p className="text-gray-400">Rarity</p>
-                    <p className={`font-medium ${getRarityColor(nft.rarity)}`}>{nft.rarity}</p>
+                    <p className={`font-medium ${getRarityColor(nft.rarity)}`}>
+                      {nft.rarity}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-400">ID</p>
@@ -296,12 +304,22 @@ export function NFTsModal({
                   </div>
                   <div>
                     <p className="text-gray-400">Type</p>
-                    <p className="font-medium">{nft.Category ? (nft.Category === "weapons" ? "Weapon" : "Pet") : "Unknown"}</p>
+                    <p className="font-medium">
+                      {nft.Category
+                        ? nft.Category === "weapons"
+                          ? "Weapon"
+                          : "Pet"
+                        : "Unknown"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-400">Collection</p>
                     <p className="font-medium">
-                      Bruhtato {nft.Category ? nft.Category.charAt(0).toUpperCase() + nft.Category.slice(1) : "Unknown"}
+                      Bruhtato{" "}
+                      {nft.Category
+                        ? nft.Category.charAt(0).toUpperCase() +
+                          nft.Category.slice(1)
+                        : "Unknown"}
                     </p>
                   </div>
                 </div>
@@ -310,7 +328,10 @@ export function NFTsModal({
                   {action === "buy" && (
                     <div className="mb-4">
                       <p className="text-gray-400">
-                        Price: <span className="font-medium text-white">{nft.price} ADA</span>
+                        Price:{" "}
+                        <span className="font-medium text-white">
+                          {nft.price} ADA
+                        </span>
                       </p>
                     </div>
                   )}
@@ -332,7 +353,9 @@ export function NFTsModal({
                   )}
                   {action === "refund" && (
                     <div className="mb-4">
-                      <p className="text-gray-400">Are you sure you want to refund this listing?</p>
+                      <p className="text-gray-400">
+                        Are you sure you want to refund this listing?
+                      </p>
                     </div>
                   )}
                   {action === "update" && (
@@ -369,7 +392,9 @@ export function NFTsModal({
                         ? "bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900"
                         : "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
                     }`}
-                    disabled={(action === "sell" || action === "update") && !newPrice}
+                    disabled={
+                      (action === "sell" || action === "update") && !newPrice
+                    }
                   >
                     {action === "buy"
                       ? "Confirm Purchase"

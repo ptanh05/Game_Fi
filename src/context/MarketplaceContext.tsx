@@ -22,6 +22,9 @@ export const MarketProvider = ({ children }: { children: ReactNode }) => {
   interface DatumResponse {
     hash: string;
     datum: string;
+    json_value?: {
+      fields?: Array<any>;
+    };
   }
 
   const blockfrostApiKey = "previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc"; // Thay thế bằng API key của bạn
@@ -46,27 +49,37 @@ export const MarketProvider = ({ children }: { children: ReactNode }) => {
 
   async function getGameNFTs() {
     const blockchainProvider = new BlockfrostProvider(blockfrostApiKey);
-
     const data = await blockchainProvider.fetchAddressUTxOs(
       "addr_test1zqcq3m4d0q8zq5yakxgd464qucvr3gyea3x2fcf5we6qamkq3upff6k44dawpnj5w8w5suq8jxff0w54yv90yte9u46slnfap0"
     );
-    const size = data.length;
     const NFTs = [];
-
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < data.length; i++) {
       const txhash = data[i].input.txHash;
       const jsonObj = await getDatumByHash(data[i].output.dataHash as string);
+      // Fix: kiểm tra jsonObj có json_value và fields
+      if (
+        !jsonObj ||
+        !jsonObj.json_value ||
+        !jsonObj.json_value.fields ||
+        !jsonObj.json_value.fields[1] ||
+        !jsonObj.json_value.fields[1].int
+      )
+        continue;
       const response = await blockchainProvider.fetchUTxOs(txhash);
       const txInfo = await blockchainProvider.fetchTxInfo(txhash);
-      const asset = await blockchainProvider.fetchAssetMetadata(
-        response[0].output.amount[1].unit
-      );
       const blockInfo = await blockchainProvider.fetchBlockInfo(txInfo.block);
-      console.log("-------------------------------------");
+      // Lọc asset là NFT (bỏ qua ADA)
+      const nftAsset = response[0].output.amount.find(
+        (a: any) => a.unit !== "lovelace"
+      );
+      if (!nftAsset) continue;
+      const asset = await blockchainProvider.fetchAssetMetadata(nftAsset.unit);
+      // Lấy đúng ownerAddress từ UTXO chứa NFT
+      const ownerAddress = response[0].output.address;
       const NFT = {
         name: asset.name,
-        ownerAddress: response[1].output.address,
-        unit: response[0].output.amount[1].unit,
+        ownerAddress: ownerAddress,
+        unit: nftAsset.unit,
         image: asset.image,
         txhash: txhash,
         rarity: asset.rarity,
