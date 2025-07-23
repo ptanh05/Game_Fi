@@ -1120,7 +1120,7 @@ export default function EarnNFTs() {
             guaranteedEpic: data.pity_guaranteedEpic,
             guaranteedLegendary: data.pity_guaranteedLegendary,
           });
-          // Lấy lịch sử user
+          // Fetch lại lịch sử user
           fetch(`/api/inventory/user_history?user_address=${address}`)
             .then((res) => res.json())
             .then((history) => setUserHistory(history));
@@ -1292,6 +1292,24 @@ export default function EarnNFTs() {
         newHistoryItems
       );
       setUserHistory((prevHistory) => [...newHistoryItems, ...prevHistory]);
+
+      // Fetch lại user từ API để đồng bộ UI với database
+      fetch(`/api/inventory/users`)
+        .then((res) => res.json())
+        .then((users) => {
+          const data = users.find((u: any) => u.address === address);
+          if (!data) return;
+          setUserKeys(data.currentkeys);
+          setUserPity({
+            current: data.pity_current,
+            guaranteedEpic: data.pity_guaranteedEpic,
+            guaranteedLegendary: data.pity_guaranteedLegendary,
+          });
+          // Fetch lại lịch sử user
+          fetch(`/api/inventory/user_history?user_address=${address}`)
+            .then((res) => res.json())
+            .then((history) => setUserHistory(history));
+        });
     }
   };
 

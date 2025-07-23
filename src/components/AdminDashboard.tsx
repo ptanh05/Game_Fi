@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Mint from "./Mint";
 
 const menu = [
@@ -10,6 +10,43 @@ const menu = [
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
+  const [users, setUsers] = useState<any[]>([]);
+  const [nfts, setNfts] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch users
+  useEffect(() => {
+    if (activeTab === "users") {
+      setLoading(true);
+      fetch("/api/inventory/users")
+        .then((res) => res.json())
+        .then((data) => setUsers(data))
+        .finally(() => setLoading(false));
+    }
+  }, [activeTab]);
+
+  // Fetch NFTs
+  useEffect(() => {
+    if (activeTab === "nfts") {
+      setLoading(true);
+      fetch("/api/inventory/nfts_cache")
+        .then((res) => res.json())
+        .then((data) => setNfts(data))
+        .finally(() => setLoading(false));
+    }
+  }, [activeTab]);
+
+  // Fetch Stats
+  useEffect(() => {
+    if (activeTab === "stats") {
+      setLoading(true);
+      fetch("/api/inventory/stats")
+        .then((res) => res.json())
+        .then((data) => setStats(data))
+        .finally(() => setLoading(false));
+    }
+  }, [activeTab]);
 
   return (
     <div style={{ display: "flex", minHeight: 500 }}>
@@ -99,9 +136,122 @@ const AdminDashboard = () => {
               >
                 👤 Quản lý User
               </h2>
-              <p style={{ color: "#232946" }}>
-                Hiển thị danh sách user ở đây (đang phát triển).
-              </p>
+              {loading ? (
+                <p>Đang tải dữ liệu...</p>
+              ) : (
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 15,
+                  }}
+                >
+                  <thead>
+                    <tr style={{ background: "#f3f3f3" }}>
+                      <th
+                        style={{
+                          padding: 10,
+                          border: "1px solid #eee",
+                          textAlign: "left",
+                        }}
+                      >
+                        Address
+                      </th>
+                      <th
+                        style={{
+                          padding: 10,
+                          border: "1px solid #eee",
+                          textAlign: "center",
+                        }}
+                      >
+                        Keys
+                      </th>
+                      <th
+                        style={{
+                          padding: 10,
+                          border: "1px solid #eee",
+                          textAlign: "center",
+                        }}
+                      >
+                        Pity Current
+                      </th>
+                      <th
+                        style={{
+                          padding: 10,
+                          border: "1px solid #eee",
+                          textAlign: "center",
+                        }}
+                      >
+                        Epic
+                      </th>
+                      <th
+                        style={{
+                          padding: 10,
+                          border: "1px solid #eee",
+                          textAlign: "center",
+                        }}
+                      >
+                        Legendary
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u: any) => (
+                      <tr key={u.address}>
+                        <td
+                          style={{
+                            padding: 10,
+                            border: "1px solid #eee",
+                            fontFamily: "monospace",
+                            maxWidth: 220,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {u.address.slice(0, 10) + "..." + u.address.slice(-8)}
+                        </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            border: "1px solid #eee",
+                            textAlign: "center",
+                          }}
+                        >
+                          {u.currentkeys}
+                        </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            border: "1px solid #eee",
+                            textAlign: "center",
+                          }}
+                        >
+                          {u.pity_current}
+                        </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            border: "1px solid #eee",
+                            textAlign: "center",
+                          }}
+                        >
+                          {u.pity_guaranteedEpic}
+                        </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            border: "1px solid #eee",
+                            textAlign: "center",
+                          }}
+                        >
+                          {u.pity_guaranteedLegendary}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
           {activeTab === "nfts" && (
@@ -116,9 +266,55 @@ const AdminDashboard = () => {
               >
                 🖼️ Quản lý NFT
               </h2>
-              <p style={{ color: "#232946" }}>
-                Hiển thị danh sách NFT ở đây (đang phát triển).
-              </p>
+              {loading ? (
+                <p>Đang tải dữ liệu...</p>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "#f3f3f3" }}>
+                      <th style={{ padding: 8, border: "1px solid #eee" }}>
+                        Tên
+                      </th>
+                      <th style={{ padding: 8, border: "1px solid #eee" }}>
+                        Hình ảnh
+                      </th>
+                      <th style={{ padding: 8, border: "1px solid #eee" }}>
+                        Chủ sở hữu
+                      </th>
+                      <th style={{ padding: 8, border: "1px solid #eee" }}>
+                        Trạng thái
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nfts.map((n: any) => (
+                      <tr key={n.txhash}>
+                        <td style={{ padding: 8, border: "1px solid #eee" }}>
+                          {n.name}
+                        </td>
+                        <td style={{ padding: 8, border: "1px solid #eee" }}>
+                          <img
+                            src={`https://gateway.pinata.cloud/ipfs/${n.image}`}
+                            alt={n.name}
+                            style={{
+                              width: 48,
+                              height: 48,
+                              objectFit: "cover",
+                              borderRadius: 8,
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: 8, border: "1px solid #eee" }}>
+                          {n.ownerAddress}
+                        </td>
+                        <td style={{ padding: 8, border: "1px solid #eee" }}>
+                          {n.status || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
           {activeTab === "stats" && (
@@ -133,9 +329,24 @@ const AdminDashboard = () => {
               >
                 📊 Thống kê
               </h2>
-              <p style={{ color: "#232946" }}>
-                Hiển thị thống kê tổng quan ở đây (đang phát triển).
-              </p>
+              {loading ? (
+                <p>Đang tải dữ liệu...</p>
+              ) : stats ? (
+                <ul style={{ fontSize: 18, color: "#232946" }}>
+                  <li>
+                    Tổng số user: <b>{stats.totalUsers}</b>
+                  </li>
+                  <li>
+                    Tổng số NFT: <b>{stats.totalNFTs}</b>
+                  </li>
+                  <li>
+                    Tổng số lượt quay: <b>{stats.totalWishes}</b>
+                  </li>
+                  {/* Thêm các thống kê khác nếu có */}
+                </ul>
+              ) : (
+                <p>Không có dữ liệu thống kê.</p>
+              )}
             </div>
           )}
           {activeTab === "mint" && (
