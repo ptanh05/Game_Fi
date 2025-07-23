@@ -40,21 +40,17 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
   const getMetadata = useCallback(async () => {
     if (!connected || !wallet) return;
-
     try {
       const [assets, changeAddress, balanceData] = await Promise.all([
         wallet.getAssets(),
         wallet.getChangeAddress(),
         wallet.getBalance(),
       ]);
-
       setAddress(changeAddress);
-
       if (balanceData.length > 0) {
         const lovelace = parseInt(balanceData[0].quantity, 10);
         setBalance(`${(lovelace / 1000000).toFixed(2)} ADA`);
       }
-
       const metadataResults = await Promise.allSettled(
         assets.map(async (asset) => {
           try {
@@ -84,13 +80,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
           }
         })
       );
-
       const successfulMetadata = metadataResults
         .filter(
           (result) => result.status === "fulfilled" && result.value?.rarity
         )
         .map((result) => (result as PromiseFulfilledResult<any>).value);
-
       setMetadata(successfulMetadata);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
@@ -98,7 +92,35 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [connected, wallet]);
 
+  // Gọi getMetadata khi connect ví
   useEffect(() => {
+    if (connected && wallet) {
+      getMetadata();
+      console.log("Wallet connected:", wallet);
+    }
+  }, [connected, wallet, getMetadata]);
+
+  // Nếu address chưa lấy được, thử lại sau 2s
+  useEffect(() => {
+    if (connected && wallet && (address === "Not connected" || !address)) {
+      const timeout = setTimeout(() => {
+        getMetadata();
+        console.log("Retry getMetadata after 2s");
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [connected, wallet, address, getMetadata]);
+
+  // Log giá trị address, balance, metadata mỗi khi thay đổi
+  useEffect(() => {
+    console.log(
+      "Address:",
+      address,
+      "Balance:",
+      balance,
+      "Metadata:",
+      metadata
+    );
     if (connected && address && address !== "Not connected") {
       axios
         .post("/api/inventory/users", {
@@ -109,7 +131,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
           pity_guaranteedLegendary: 0,
         })
         .catch((e) => {
-          // Có thể ignore lỗi nếu user đã tồn tại
           if (
             e.response?.data?.error &&
             !e.response.data.error.includes("duplicate")
@@ -118,7 +139,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
           }
         });
     }
-  }, [connected, address]);
+  }, [connected, address, balance, metadata]);
 
   const handleDisconnect = async () => {
     try {
