@@ -1,6 +1,14 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
-import { useWallet } from '@meshsdk/react';
-import { BlockfrostProvider } from '@meshsdk/core';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { useWallet } from "@meshsdk/react";
+import { BlockfrostProvider } from "@meshsdk/core";
+import axios from "axios";
 
 interface WalletContextType {
   name: string;
@@ -20,23 +28,24 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const blockchainProvider = new BlockfrostProvider(
-    'previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc'
+    "previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc"
   );
-  
-  const { name, connecting, connected, wallet, connect, disconnect, error } = useWallet();
+
+  const { name, connecting, connected, wallet, connect, disconnect, error } =
+    useWallet();
   const [metadata, setMetadata] = useState<any[]>([]);
-  const [address, setAddress] = useState('Not connected');
-  const [balance, setBalance] = useState('0 ADA');
+  const [address, setAddress] = useState("Not connected");
+  const [balance, setBalance] = useState("0 ADA");
   const [errorState, setErrorState] = useState<string | null>(null);
 
   const getMetadata = useCallback(async () => {
     if (!connected || !wallet) return;
-    
+
     try {
       const [assets, changeAddress, balanceData] = await Promise.all([
         wallet.getAssets(),
         wallet.getChangeAddress(),
-        wallet.getBalance()
+        wallet.getBalance(),
       ]);
 
       setAddress(changeAddress);
@@ -49,45 +58,67 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       const metadataResults = await Promise.allSettled(
         assets.map(async (asset) => {
           try {
-            const metadata = await blockchainProvider.fetchAssetMetadata(asset.unit);
-            return metadata ? {
-              name: metadata.name,
-              unit: asset.unit,
-              image: metadata.image,
-              policyId: asset.policyId,
-              assetName: asset.assetName,
-              rarity: metadata.rarity,
-              ATK: metadata.atk,
-              ATKSpeed: metadata.atkspeed,
-              MPConsume: metadata.mpconsume,
-              CritRate: metadata.critrate,
-              Rechargeable: metadata.rechargeable,
-              MultiShoot: metadata.multishoot,
-              Category: metadata.type,
-            } : null;
+            const metadata = await blockchainProvider.fetchAssetMetadata(
+              asset.unit
+            );
+            return metadata
+              ? {
+                  name: metadata.name,
+                  unit: asset.unit,
+                  image: metadata.image,
+                  policyId: asset.policyId,
+                  assetName: asset.assetName,
+                  rarity: metadata.rarity,
+                  ATK: metadata.atk,
+                  ATKSpeed: metadata.atkspeed,
+                  MPConsume: metadata.mpconsume,
+                  CritRate: metadata.critrate,
+                  Rechargeable: metadata.rechargeable,
+                  MultiShoot: metadata.multishoot,
+                  Category: metadata.type,
+                }
+              : null;
           } catch (error) {
-            console.error('Error fetching asset metadata:', error);
+            console.error("Error fetching asset metadata:", error);
             return null;
           }
         })
       );
 
       const successfulMetadata = metadataResults
-        .filter(result => result.status === 'fulfilled' && result.value?.rarity)
-        .map(result => (result as PromiseFulfilledResult<any>).value);
+        .filter(
+          (result) => result.status === "fulfilled" && result.value?.rarity
+        )
+        .map((result) => (result as PromiseFulfilledResult<any>).value);
 
       setMetadata(successfulMetadata);
     } catch (error) {
-      console.error('Error fetching wallet data:', error);
-      setErrorState(error instanceof Error ? error.message : 'Unknown error');
+      console.error("Error fetching wallet data:", error);
+      setErrorState(error instanceof Error ? error.message : "Unknown error");
     }
   }, [connected, wallet]);
 
   useEffect(() => {
-    if (connected && wallet) {
-      getMetadata();
+    if (connected && address && address !== "Not connected") {
+      axios
+        .post("/api/inventory/users", {
+          address,
+          currentkeys: 0,
+          pity_current: 0,
+          pity_guaranteedEpic: 0,
+          pity_guaranteedLegendary: 0,
+        })
+        .catch((e) => {
+          // Có thể ignore lỗi nếu user đã tồn tại
+          if (
+            e.response?.data?.error &&
+            !e.response.data.error.includes("duplicate")
+          ) {
+            console.log(e.response.data.error);
+          }
+        });
     }
-  }, [connected, wallet, getMetadata]);
+  }, [connected, address]);
 
   const handleDisconnect = async () => {
     try {
@@ -101,19 +132,21 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <WalletContext.Provider value={{
-      name,
-      connecting,
-      connected,
-      wallet,
-      connect,
-      disconnect: handleDisconnect,
-      error: errorState || error?.toString() || null,
-      metadata,
-      getMetadata,
-      address,
-      balance
-    }}>
+    <WalletContext.Provider
+      value={{
+        name,
+        connecting,
+        connected,
+        wallet,
+        connect,
+        disconnect: handleDisconnect,
+        error: errorState || error?.toString() || null,
+        metadata,
+        getMetadata,
+        address,
+        balance,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
@@ -122,7 +155,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 export const useWalletContext = () => {
   const context = useContext(WalletContext);
   if (!context) {
-    throw new Error('useWalletContext must be used within a WalletProvider');
+    throw new Error("useWalletContext must be used within a WalletProvider");
   }
   return context;
 };

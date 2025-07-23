@@ -3,9 +3,12 @@ import Link from "next/link";
 import Head from "next/head";
 import ConnectionHandler from "./ConnectionHandler";
 import { useRouter } from "next/router";
+import { useWalletContext } from '../context/WalletContext';
+
 export default function Header() {
   const router = useRouter();
   const currentPath = router.pathname;
+  const { address } = useWalletContext();
 
   const getLinkClass = (path: string) => {
     return currentPath === path
@@ -41,19 +44,18 @@ export default function Header() {
           <Link href="/" className={getLinkClass("/")}>
             HOME
           </Link>
-          <Link href="/MyAccount" className={getLinkClass("/MyAccount")}>
-            MY ACCOUNT
-          </Link>
-          <Link href="/Marketplace" className={getLinkClass("/Marketplace")}>
-            MARKETPLACE
-          </Link>
-          <Link href="/EarnNFTs" className={getLinkClass("/EarnNFTs")}>
-            EARN NFTS
-          </Link>
+          <Link href="/MyAccount" className={getLinkClass("/MyAccount")}>MY ACCOUNT</Link>
+          <Link href="/Marketplace" className={getLinkClass("/Marketplace")}>MARKETPLACE</Link>
+          <Link href="/EarnNFTs" className={getLinkClass("/EarnNFTs")}>EARN NFTS</Link>
         </nav>
 
-        {/* Connect Wallet Button */}
-        <div className="flex items-center">
+        {/* Connect Wallet Button + Address */}
+        <div className="flex items-center space-x-4">
+          {address && address !== "Not connected" && (
+            <span className="text-xs text-purple-300 font-mono truncate max-w-[160px] hidden md:inline-block" title={address}>
+              {address.substring(0, 10)}...{address.substring(address.length - 13)}
+            </span>
+          )}
           <div className="w-47 flex-shrink-0 flex justify-end">
             <ConnectionHandler isDisabled={false} />
           </div>
