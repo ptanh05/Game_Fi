@@ -28,7 +28,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const blockchainProvider = new BlockfrostProvider(
-    "previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc"
+    "previewNNOxQObPDs5JqClb5To9DKf6JpqxSiTQ"
   );
 
   const { name, connecting, connected, wallet, connect, disconnect, error } =

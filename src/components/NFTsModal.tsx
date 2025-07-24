@@ -6,6 +6,8 @@ import { X } from "lucide-react";
 import { useContractContext } from "../context/ContractContext";
 import { useWalletContext } from "~/context/WalletContext";
 import { useMarketContext } from "~/context/MarketplaceContext";
+import { usePlutusContract } from "../hooks/usePlutusContract";
+import { Transaction } from "@meshsdk/core";
 
 type NFT = {
   unit: number;
@@ -21,6 +23,11 @@ type NFT = {
   CritRate: number;
   Rechargeable: number;
   MultiShoot: number;
+  policyId: string;
+  assetName: string;
+  utxo: string;
+  ownerAddress: string;
+  id: string;
 };
 
 type NFTsModalProps = {
@@ -34,9 +41,25 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
   const [showActionForm, setShowActionForm] = useState(false);
   const [newPrice, setNewPrice] = useState("");
 
-  const { contract } = useContractContext();
-  const { wallet } = useWalletContext();
+  const contract = usePlutusContract();
+  const { wallet, address } = useWalletContext();
   const { getGameNFTs } = useMarketContext();
+
+  // Lấy contract address từ plutus.json
+  const contractAddress = contract?.validators?.[0]?.hash;
+
+  // Build datum đúng schema từ plutus.json
+  const buildDatum = (priceLovelace: number) => ({
+    seller: address,
+    price: priceLovelace,
+    asset: {
+      policy: nft.policyId,
+      name: nft.assetName,
+    },
+  });
+
+  // Build redeemer đúng schema từ plutus.json
+  const buildRedeemer = (action: string) => ({ action });
 
   useEffect(() => {
     if (isOpen) {
@@ -83,16 +106,28 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
 
   const handleSellAsset = async () => {
     try {
-      // Convert the provided price (in ADA) to lovelace (assuming 1 ADA = 1,000,000 lovelace)
       const priceADA = parseFloat(newPrice);
-      const priceLovelace = Math.floor(priceADA * 1000000);
-
-      // Here we assume nft.unit holds the asset identifier. If needed, replace with a hardcoded value.
-      const tx = await contract.listAsset(String(nft.unit), priceLovelace);
-      const signedTx = await wallet.signTx(tx);
-      const txHash = await wallet.submitTx(signedTx);
-      console.log("NFT listed for sale. Transaction hash:", txHash);
-      // Sau khi list thành công, reload marketplace
+      const priceLovelace = Math.floor(priceADA * 1_000_000);
+      if (!contractAddress) throw new Error("Contract address not loaded");
+      const datum = buildDatum(priceLovelace);
+      const tx: any = new Transaction({ initiator: wallet });
+      tx.sendAssets({
+        address: contractAddress,
+        assets: [{ unit: nft.unit, quantity: "1" }],
+        datum: datum,
+      });
+      const unsignedTx: any = await tx.build();
+      const signedTx: any = await wallet.signTx(unsignedTx);
+      const txHash: any = await wallet.submitTx(signedTx);
+      await fetch("/api/inventory/nfts_cache", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: nft.id,
+          status: 1,
+          txhash: txHash,
+        }),
+      });
       if (getGameNFTs) await getGameNFTs();
     } catch (error) {
       console.error("Error listing asset for sale:", error);
@@ -100,26 +135,78 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
   };
 
   const handleBuyAsset = async () => {
-    const utxo = await contract.getUtxoByTxHash(nft.txhash);
-    const tx = await contract.purchaseAsset(utxo);
     try {
-      const signedTx = await wallet.signTx(tx);
-      const txHash = await wallet.submitTx(signedTx);
-      console.log("NFT purchase", txHash);
+      if (!contractAddress) throw new Error("Contract address not loaded");
+      const redeemer = buildRedeemer("Buy");
+      const tx: any = new Transaction({ initiator: wallet });
+      tx.redeemValue({
+        script: {
+          type: "PlutusV2",
+          code: contract?.validators?.[0]?.compiledCode,
+        },
+        utxo: nft.utxo,
+        redeemer: redeemer,
+      });
+      tx.sendAssets({
+        address: address,
+        assets: [{ unit: nft.unit, quantity: "1" }],
+      });
+      tx.sendLovelace({
+        address: nft.ownerAddress,
+        lovelace: Math.floor(Number(nft.price ?? 0) * 1_000_000),
+      });
+      const unsignedTx: any = await tx.build();
+      const signedTx: any = await wallet.signTx(unsignedTx);
+      const txHash: any = await wallet.submitTx(signedTx);
+      await fetch("/api/inventory/nfts_cache", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: nft.id,
+          status: 2,
+          ownerAddress: address,
+          txhash: txHash,
+        }),
+      });
+      if (getGameNFTs) await getGameNFTs();
     } catch (error) {
       console.error("Error purchasing asset:", error);
     }
   };
 
   const handleRefundAsset = async () => {
-    const utxo = await contract.getUtxoByTxHash(nft.txhash);
-    const tx = await contract.delistAsset(utxo);
     try {
-      const signedTx = await wallet.signTx(tx);
-      const txHash = await wallet.submitTx(signedTx);
-      console.log("NFT purchase", txHash);
+      if (!contractAddress) throw new Error("Contract address not loaded");
+      const redeemer = buildRedeemer("Refund");
+      const tx: any = new Transaction({ initiator: wallet });
+      tx.redeemValue({
+        script: {
+          type: "PlutusV2",
+          code: contract?.validators?.[0]?.compiledCode,
+        },
+        utxo: nft.utxo,
+        redeemer: redeemer,
+      });
+      tx.sendAssets({
+        address: address,
+        assets: [{ unit: nft.unit, quantity: "1" }],
+      });
+      const unsignedTx: any = await tx.build();
+      const signedTx: any = await wallet.signTx(unsignedTx);
+      const txHash: any = await wallet.submitTx(signedTx);
+      await fetch("/api/inventory/nfts_cache", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: nft.id,
+          status: 0,
+          ownerAddress: address,
+          txhash: txHash,
+        }),
+      });
+      if (getGameNFTs) await getGameNFTs();
     } catch (error) {
-      console.error("Error purchasing asset:", error);
+      console.error("Error refunding asset:", error);
     }
   };
 

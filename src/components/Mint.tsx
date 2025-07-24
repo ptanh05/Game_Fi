@@ -93,7 +93,7 @@ export default function Mint() {
         throw new Error("No UTXOs found in wallet");
       }
       const blockchainProvider = new BlockfrostProvider(
-        "preview50oA6vv17f8AQaKXkUUSUEN14bTTHbJ0"
+        "previewNNOxQObPDs5JqClb5To9DKf6JpqxSiTQ"
       );
       const address = usedAddress[0];
       const { pubKeyHash: keyHash } = deserializeAddress(address);

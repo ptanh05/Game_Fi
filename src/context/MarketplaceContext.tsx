@@ -27,7 +27,7 @@ export const MarketProvider = ({ children }: { children: ReactNode }) => {
     };
   }
 
-  const blockfrostApiKey = "previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc"; // Thay thế bằng API key của bạn
+  const blockfrostApiKey = "previewNNOxQObPDs5JqClb5To9DKf6JpqxSiTQ"; // Thay thế bằng API key của bạn
   const baseUrl = "https://cardano-preview.blockfrost.io/api/v0";
 
   async function getDatumByHash(datumHash: string): Promise<DatumResponse> {
