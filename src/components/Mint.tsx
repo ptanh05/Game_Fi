@@ -193,8 +193,26 @@ export default function Mint() {
       const txHash = await wallet.submitTx(signedTx);
       console.log("Transaction submitted successfully:", txHash);
       setMessage(`Mint successful! Transaction hash: ${txHash}`);
-      // Gợi ý: Gọi API backend để lưu NFT vào nfts_cache ở đây nếu muốn
-      // await fetch("/api/inventory/nfts_cache", { method: "POST", ... })
+      // Đẩy data NFT lên database sau khi mint thành công
+      await fetch("/api/inventory/nfts_cache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: cleanTokenName,
+          image: ipfsHash,
+          txhash: txHash,
+          rarity: rarity,
+          type: typeProp,
+          status: 0, // 0 = chưa bán
+          ATK: atk,
+          ATKSpeed: atkspeed,
+          MPConsume: mpconsume,
+          CritRate: critrate,
+          Rechargeable: rechargeable,
+          MultiShoot: multishoot,
+          Category: typeProp,
+        }),
+      });
       // Reset form
       setCredit(null);
       setTitle("");
