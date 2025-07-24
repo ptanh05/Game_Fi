@@ -126,9 +126,21 @@ async function fetchNFTsFromDB() {
   const res = await fetch("/api/inventory/nfts_cache");
   const data = await res.json();
   // Giả sử data là mảng NFT, phân loại theo rarity
-  const pets = { Legendary: [], Epic: [], Rare: [], Common: [] };
-  data.forEach((nft: any) => {
-    if (pets[nft.rarity]) pets[nft.rarity].push(nft);
+  type NFTItem = {
+    name: string;
+    image: string;
+    txhash: string;
+    rarity: string;
+    type: string;
+  };
+  const pets: {
+    Legendary: NFTItem[];
+    Epic: NFTItem[];
+    Rare: NFTItem[];
+    Common: NFTItem[];
+  } = { Legendary: [], Epic: [], Rare: [], Common: [] };
+  data.forEach((nft: NFTItem) => {
+    if (pets[nft.rarity as keyof typeof pets]) pets[nft.rarity as keyof typeof pets].push(nft);
   });
   return pets;
 }
@@ -1120,7 +1132,7 @@ export default function EarnNFTs() {
             guaranteedEpic: data.pity_guaranteedEpic,
             guaranteedLegendary: data.pity_guaranteedLegendary,
           });
-          // Fetch lại lịch sử user
+          // Lấy lịch sử user
           fetch(`/api/inventory/user_history?user_address=${address}`)
             .then((res) => res.json())
             .then((history) => setUserHistory(history));
@@ -1237,7 +1249,14 @@ export default function EarnNFTs() {
         ...pets.Common,
       ];
 
-      const selectedRewards = [];
+      interface SelectedReward {
+        name: string;
+        image: string;
+        txhash: string;
+        rarity: string;
+        type: string;
+      }
+      const selectedRewards: SelectedReward[] = [];
       const newPity = { ...userPity };
 
       for (let i = 0; i < count && allItems.length > 0; i++) {
@@ -1292,24 +1311,6 @@ export default function EarnNFTs() {
         newHistoryItems
       );
       setUserHistory((prevHistory) => [...newHistoryItems, ...prevHistory]);
-
-      // Fetch lại user từ API để đồng bộ UI với database
-      fetch(`/api/inventory/users`)
-        .then((res) => res.json())
-        .then((users) => {
-          const data = users.find((u: any) => u.address === address);
-          if (!data) return;
-          setUserKeys(data.currentkeys);
-          setUserPity({
-            current: data.pity_current,
-            guaranteedEpic: data.pity_guaranteedEpic,
-            guaranteedLegendary: data.pity_guaranteedLegendary,
-          });
-          // Fetch lại lịch sử user
-          fetch(`/api/inventory/user_history?user_address=${address}`)
-            .then((res) => res.json())
-            .then((history) => setUserHistory(history));
-        });
     }
   };
 

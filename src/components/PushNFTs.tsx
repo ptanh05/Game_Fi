@@ -13,17 +13,57 @@ import {
   Search,
 } from "lucide-react";
 import { useWalletContext } from "~/context/WalletContext";
-import { scriptCbor, scriptAddr, blockchainProvider, getScript, getTxBuilder } from "~/contract/Contract";
-import { Asset, Data, deserializeAddress, mConStr0, Transaction } from "@meshsdk/core";
+import {
+  blockchainProvider,
+  getScript,
+  getTxBuilder,
+} from "~/contract/Contract";
+import {
+  Asset,
+  Data,
+  deserializeAddress,
+  mConStr0,
+  Transaction,
+} from "@meshsdk/core";
 
 // Mock data cho pets (fallback nếu ví không có NFT)
 const mockPets = [
-  { id: 1, name: "Shadow Dragon", rarity: "Legendary", image: "/placeholder.svg?height=100&width=100" },
-  { id: 2, name: "Forest Wolf", rarity: "Epic", image: "/placeholder.svg?height=100&width=100" },
-  { id: 3, name: "Fire Fox", rarity: "Rare", image: "/placeholder.svg?height=100&width=100" },
-  { id: 4, name: "Stone Golem", rarity: "Common", image: "/placeholder.svg?height=100&width=100" },
-  { id: 5, name: "Water Sprite", rarity: "Epic", image: "/placeholder.svg?height=100&width=100" },
-  { id: 6, name: "Phoenix", rarity: "Legendary", image: "/placeholder.svg?height=100&width=100" },
+  {
+    id: 1,
+    name: "Shadow Dragon",
+    rarity: "Legendary",
+    image: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 2,
+    name: "Forest Wolf",
+    rarity: "Epic",
+    image: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 3,
+    name: "Fire Fox",
+    rarity: "Rare",
+    image: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 4,
+    name: "Stone Golem",
+    rarity: "Common",
+    image: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 5,
+    name: "Water Sprite",
+    rarity: "Epic",
+    image: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 6,
+    name: "Phoenix",
+    rarity: "Legendary",
+    image: "/placeholder.svg?height=100&width=100",
+  },
 ];
 
 export function PushNFTs() {
@@ -36,33 +76,36 @@ export function PushNFTs() {
   const [searchQuery, setSearchQuery] = useState(""); // Thêm state cho search query
   const itemsPerPage = 8;
 
-  const { connected, metadata, address, balance,wallet } = useWalletContext();
-
+  const { connected, metadata, address, balance, wallet } = useWalletContext();
 
   const lockNft = async (nft: any) => {
     const asset: Asset[] = [
       {
         unit: "lovelace",
-        quantity: '10000000',
+        quantity: "10000000",
       },
-    ]
+    ];
     const utxos = await wallet.getUtxos();
     const walletAddress = (await wallet.getUsedAddresses())[0];
-   
+
     const { scriptAddr } = getScript();
-   
+
     // hash of the public key of the wallet, to be used in the datum
-   
+
     // build transaction with MeshTxBuilder
     const txBuilder = getTxBuilder();
     await txBuilder
       .txOut(scriptAddr, asset) // send assets to the script address
-      .txOutDatumHashValue(mConStr0(["dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c"])) // provide the datum where `"constructor": 0`
+      .txOutDatumHashValue(
+        mConStr0([
+          "dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c",
+        ])
+      ) // provide the datum where `"constructor": 0`
       .changeAddress(walletAddress) // send change back to the wallet address
       .selectUtxosFrom(utxos)
       .complete();
     const unsignedTx = txBuilder.txHex;
-   
+
     const signedTx = await wallet.signTx(unsignedTx);
     const txHash = await wallet.submitTx(signedTx);
     console.log(`1 tADA locked into the contract at Tx ID: ${txHash}`);
@@ -99,7 +142,10 @@ export function PushNFTs() {
   }, [activeTab, rarityFilter, searchQuery, connected, metadata]);
 
   // Các chỉ số phân trang
-  const indexOfLastItem = Math.min(currentPage * itemsPerPage, filteredNfts.length);
+  const indexOfLastItem = Math.min(
+    currentPage * itemsPerPage,
+    filteredNfts.length
+  );
   const indexOfFirstItem = Math.max(0, indexOfLastItem - itemsPerPage);
   const currentItems = filteredNfts.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredNfts.length / itemsPerPage);
@@ -171,7 +217,9 @@ export function PushNFTs() {
             <div>
               <p className="text-gray-400 mb-1">Wallet Address</p>
               <div className="flex items-center">
-                <p className="font-mono text-sm mr-2">{shortenAddress(address)}</p>
+                <p className="font-mono text-sm mr-2">
+                  {shortenAddress(address)}
+                </p>
                 <button
                   onClick={() => copyToClipboard(address)}
                   className="text-purple-400 hover:text-purple-300"
@@ -242,21 +290,26 @@ export function PushNFTs() {
                 {showRarityDropdown && (
                   <div className="absolute right-0 mt-1 bg-gray-800 rounded-md shadow-lg z-10 w-full md:w-40">
                     <ul>
-                      {["All", "Legendary", "Epic", "Rare", "Common"].map((r) => (
-                        <li key={r}>
-                          <button
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${
-                              rarityFilter === r ? "text-purple-400" : ""
-                            }`}
-                            onClick={() => {
-                              setRarityFilter(r);
-                              setShowRarityDropdown(false);
-                            }}
-                          >
-                            {r} <span className="text-gray-500 ml-1">({getRarityCount(r)})</span>
-                          </button>
-                        </li>
-                      ))}
+                      {["All", "Legendary", "Epic", "Rare", "Common"].map(
+                        (r) => (
+                          <li key={r}>
+                            <button
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${
+                                rarityFilter === r ? "text-purple-400" : ""
+                              }`}
+                              onClick={() => {
+                                setRarityFilter(r);
+                                setShowRarityDropdown(false);
+                              }}
+                            >
+                              {r}{" "}
+                              <span className="text-gray-500 ml-1">
+                                ({getRarityCount(r)})
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}
@@ -268,7 +321,9 @@ export function PushNFTs() {
           <div className="flex border-b border-gray-700 mb-6">
             <button
               className={`py-2 px-4 font-medium ${
-                activeTab === "weapons" ? "text-purple-400 border-b-2 border-purple-400" : "text-gray-400 hover:text-white"
+                activeTab === "weapons"
+                  ? "text-purple-400 border-b-2 border-purple-400"
+                  : "text-gray-400 hover:text-white"
               }`}
               onClick={() => setActiveTab("weapons")}
             >
@@ -276,7 +331,9 @@ export function PushNFTs() {
             </button>
             <button
               className={`py-2 px-4 font-medium ${
-                activeTab === "pets" ? "text-purple-400 border-b-2 border-purple-400" : "text-gray-400 hover:text-white"
+                activeTab === "pets"
+                  ? "text-purple-400 border-b-2 border-purple-400"
+                  : "text-gray-400 hover:text-white"
               }`}
               onClick={() => setActiveTab("pets")}
             >
@@ -289,7 +346,7 @@ export function PushNFTs() {
             {currentItems.map((nft: any) => (
               <div
                 key={nft.id || nft.unit}
-                onClick ={() => lockNft(nft)}
+                onClick={() => lockNft(nft)}
                 className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-lg hover:shadow-purple-900/20 transition-all duration-300"
               >
                 <div className="relative h-40 bg-gray-700">
@@ -338,14 +395,18 @@ export function PushNFTs() {
           {filteredNfts.length > 0 && (
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-400">
-                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredNfts.length)} of {filteredNfts.length} items
+                Showing {indexOfFirstItem + 1}-
+                {Math.min(indexOfLastItem, filteredNfts.length)} of{" "}
+                {filteredNfts.length} items
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`p-2 rounded-md ${
-                    currentPage === 1 ? "text-gray-600 cursor-not-allowed" : "text-gray-400 hover:bg-gray-800"
+                    currentPage === 1
+                      ? "text-gray-600 cursor-not-allowed"
+                      : "text-gray-400 hover:bg-gray-800"
                   }`}
                   aria-label="Previous page"
                 >
@@ -367,7 +428,9 @@ export function PushNFTs() {
                       key={`page-${page}`}
                       onClick={() => paginate(Number(page))}
                       className={`w-8 h-8 rounded-md ${
-                        currentPage === page ? "bg-purple-600 text-white" : "text-gray-400 hover:bg-gray-800"
+                        currentPage === page
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-400 hover:bg-gray-800"
                       }`}
                     >
                       {page}
@@ -378,7 +441,9 @@ export function PushNFTs() {
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`p-2 rounded-md ${
-                    currentPage === totalPages ? "text-gray-600 cursor-not-allowed" : "text-gray-400 hover:bg-gray-800"
+                    currentPage === totalPages
+                      ? "text-gray-600 cursor-not-allowed"
+                      : "text-gray-400 hover:bg-gray-800"
                   }`}
                   aria-label="Next page"
                 >
