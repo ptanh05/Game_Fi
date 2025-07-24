@@ -195,7 +195,7 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
       const signedTx: any = await wallet.signTx(unsignedTx);
       const txHash: any = await wallet.submitTx(signedTx);
       await fetch("/api/inventory/nfts_cache", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: nft.id,
