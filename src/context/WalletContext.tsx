@@ -155,7 +155,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   return (
     <WalletContext.Provider
       value={{
-        name: name ?? "",
+        name,
         connecting,
         connected,
         wallet,

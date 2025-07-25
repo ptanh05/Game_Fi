@@ -23,21 +23,23 @@ type NFT = {
   CritRate: number;
   Rechargeable: number;
   MultiShoot: number;
-  policyId: string;
-  assetName: string;
-  utxo: string;
-  ownerAddress: string;
-  id: string;
 };
 
 type NFTsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   nft: NFT;
-  action: "buy" | "sell" | "refund" | "update";
+  action: "buy" | "sell" | "refund" | "update" | "detail";
+  history?: any[];
 };
 
-export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
+export function NFTsModal({
+  isOpen,
+  onClose,
+  nft,
+  action,
+  history,
+}: NFTsModalProps) {
   const [showActionForm, setShowActionForm] = useState(false);
   const [newPrice, setNewPrice] = useState("");
 
@@ -53,8 +55,8 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
     seller: address,
     price: priceLovelace,
     asset: {
-      policy: nft.policyId,
-      name: nft.assetName,
+      // Không còn policyId, assetName
+      name: nft.name,
     },
   });
 
@@ -106,6 +108,16 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
 
   const handleSellAsset = async () => {
     try {
+      if (!wallet) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+      const utxos = await wallet.getUtxos();
+      console.log("UTXOs from wallet:", utxos);
+      if (!utxos || utxos.length === 0) {
+        alert("Your wallet has no ADA/UTXO. Please fund your wallet first!");
+        return;
+      }
       const priceADA = parseFloat(newPrice);
       const priceLovelace = Math.floor(priceADA * 1_000_000);
       if (!contractAddress) throw new Error("Contract address not loaded");
@@ -113,59 +125,86 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
       const tx: any = new Transaction({ initiator: wallet });
       tx.sendAssets({
         address: contractAddress,
-        assets: [{ unit: nft.unit, quantity: "1" }],
+        assets: [{ unit: String(nft.unit), quantity: "1" }],
         datum: datum,
       });
+      if (typeof tx.selectUtxosFrom === "function") {
+        tx.selectUtxosFrom(utxos);
+      }
       const unsignedTx: any = await tx.build();
       const signedTx: any = await wallet.signTx(unsignedTx);
       const txHash: any = await wallet.submitTx(signedTx);
-      await fetch("/api/inventory/nfts_cache", {
-        method: "PUT",
+      await fetch("/api/marketplace", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: nft.id,
-          status: 1,
+          unit: String(nft.unit),
+          name: nft.name,
+          image: nft.image,
+          rarity: nft.rarity,
+          price: newPrice,
+          category: nft.Category || "default",
           txhash: txHash,
+          atk: nft.ATK,
+          mpconsume: nft.MPConsume,
+          atkspeed: nft.ATKSpeed,
+          critrate: nft.CritRate,
+          rechargeable: nft.Rechargeable,
+          multishoot: nft.MultiShoot,
         }),
       });
+      alert("NFT đã được list lên marketplace!");
       if (getGameNFTs) await getGameNFTs();
     } catch (error) {
       console.error("Error listing asset for sale:", error);
+      alert(
+        "Error listing asset for sale: " +
+          (error && (error as any).message ? (error as any).message : error)
+      );
     }
   };
 
   const handleBuyAsset = async () => {
     try {
+      if (!wallet) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+      const utxos = await wallet.getUtxos();
+      if (!utxos || utxos.length === 0) {
+        alert("Your wallet has no ADA/UTXO. Please fund your wallet first!");
+        return;
+      }
       if (!contractAddress) throw new Error("Contract address not loaded");
       const redeemer = buildRedeemer("Buy");
       const tx: any = new Transaction({ initiator: wallet });
-      tx.redeemValue({
-        script: {
-          type: "PlutusV2",
-          code: contract?.validators?.[0]?.compiledCode,
-        },
-        utxo: nft.utxo,
-        redeemer: redeemer,
-      });
       tx.sendAssets({
         address: address,
-        assets: [{ unit: nft.unit, quantity: "1" }],
+        assets: [{ unit: String(nft.unit), quantity: "1" }],
       });
-      tx.sendLovelace({
-        address: nft.ownerAddress,
-        lovelace: Math.floor(Number(nft.price ?? 0) * 1_000_000),
-      });
+      if (typeof tx.selectUtxosFrom === "function") {
+        tx.selectUtxosFrom(utxos);
+      }
       const unsignedTx: any = await tx.build();
       const signedTx: any = await wallet.signTx(unsignedTx);
       const txHash: any = await wallet.submitTx(signedTx);
       await fetch("/api/inventory/nfts_cache", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: nft.id,
-          status: 2,
-          ownerAddress: address,
+          name: nft.name,
+          image: nft.image,
           txhash: txHash,
+          rarity: nft.rarity,
+          type: nft.Category || "default",
+          status: 2,
+          ATK: nft.ATK,
+          ATKSpeed: nft.ATKSpeed,
+          MPConsume: nft.MPConsume,
+          CritRate: nft.CritRate,
+          Rechargeable: nft.Rechargeable,
+          MultiShoot: nft.MultiShoot,
+          Category: nft.Category,
         }),
       });
       if (getGameNFTs) await getGameNFTs();
@@ -176,21 +215,25 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
 
   const handleRefundAsset = async () => {
     try {
+      if (!wallet) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+      const utxos = await wallet.getUtxos();
+      if (!utxos || utxos.length === 0) {
+        alert("Your wallet has no ADA/UTXO. Please fund your wallet first!");
+        return;
+      }
       if (!contractAddress) throw new Error("Contract address not loaded");
       const redeemer = buildRedeemer("Refund");
       const tx: any = new Transaction({ initiator: wallet });
-      tx.redeemValue({
-        script: {
-          type: "PlutusV2",
-          code: contract?.validators?.[0]?.compiledCode,
-        },
-        utxo: nft.utxo,
-        redeemer: redeemer,
-      });
       tx.sendAssets({
         address: address,
-        assets: [{ unit: nft.unit, quantity: "1" }],
+        assets: [{ unit: String(nft.unit), quantity: "1" }],
       });
+      if (typeof tx.selectUtxosFrom === "function") {
+        tx.selectUtxosFrom(utxos);
+      }
       const unsignedTx: any = await tx.build();
       const signedTx: any = await wallet.signTx(unsignedTx);
       const txHash: any = await wallet.submitTx(signedTx);
@@ -198,10 +241,19 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: nft.id,
-          status: 0,
-          ownerAddress: address,
+          name: nft.name,
+          image: nft.image,
           txhash: txHash,
+          rarity: nft.rarity,
+          type: nft.Category || "default",
+          status: 0,
+          ATK: nft.ATK,
+          ATKSpeed: nft.ATKSpeed,
+          MPConsume: nft.MPConsume,
+          CritRate: nft.CritRate,
+          Rechargeable: nft.Rechargeable,
+          MultiShoot: nft.MultiShoot,
+          Category: nft.Category,
         }),
       });
       if (getGameNFTs) await getGameNFTs();
@@ -316,7 +368,122 @@ export function NFTsModal({ isOpen, onClose, nft, action }: NFTsModalProps) {
     );
   };
 
+  // Thêm hàm copy
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  // Thêm render metadata chi tiết
+  const renderMetadata = (nft: NFT) => (
+    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+      <div>
+        <b>Name:</b> {nft.name}
+      </div>
+      <div>
+        <b>Rarity:</b> {nft.rarity}
+      </div>
+      <div>
+        <b>Type:</b> {nft.Category}
+      </div>
+      <div>
+        <b>Price:</b> {nft.price} ADA
+      </div>
+      <div>
+        <b>Unit:</b> {nft.unit}
+      </div>
+      <div>
+        <b>TxHash:</b> {nft.txhash}
+      </div>
+      <div>
+        <b>ATK:</b> {nft.ATK}
+      </div>
+      <div>
+        <b>ATKSpeed:</b> {nft.ATKSpeed}
+      </div>
+      <div>
+        <b>MPConsume:</b> {nft.MPConsume}
+      </div>
+      <div>
+        <b>CritRate:</b> {nft.CritRate}
+      </div>
+      <div>
+        <b>Rechargeable:</b> {nft.Rechargeable}
+      </div>
+      <div>
+        <b>MultiShoot:</b> {nft.MultiShoot}
+      </div>
+    </div>
+  );
+  // Thêm render lịch sử giao dịch nếu có
+  const renderHistory = (history?: any[]) =>
+    history && history.length > 0 ? (
+      <div className="mt-4">
+        <h4 className="font-bold mb-2">Lịch sử giao dịch</h4>
+        <table className="w-full text-xs">
+          <thead>
+            <tr>
+              <th>Loại</th>
+              <th>Ngày</th>
+              <th>Rarity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((item, idx) => (
+              <tr key={idx}>
+                <td>{item.type}</td>
+                <td>{new Date(item.date).toLocaleString()}</td>
+                <td>{item.rarity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : null;
+
   if (!isOpen) return null;
+
+  // Trong phần render, nếu action === 'detail', chỉ hiển thị metadata + history, không có nút giao dịch
+  if (action === "detail") {
+    return (
+      <div
+        className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-6"
+        onClick={onClose}
+      >
+        <div
+          className="bg-gray-900 rounded-lg max-w-2xl w-full max-h-screen shadow-2xl overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center p-6 border-b border-gray-700">
+            <h3 className="text-3xl font-bold text-white">{nft.name}</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          <div className="p-6 flex flex-col md:flex-row gap-8">
+            <div className="relative h-64 w-64 bg-gray-800 rounded-lg overflow-hidden">
+              <Image
+                src={
+                  nft.image.startsWith("http")
+                    ? nft.image
+                    : `https://gateway.pinata.cloud/ipfs/${nft.image}`
+                }
+                alt={nft.name}
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="flex-1">
+              {renderMetadata(nft)}
+              {renderHistory(history)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

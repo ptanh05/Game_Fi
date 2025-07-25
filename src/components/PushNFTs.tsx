@@ -25,6 +25,7 @@ import {
   mConStr0,
   Transaction,
 } from "@meshsdk/core";
+import { usePlutusContract } from "../hooks/usePlutusContract";
 
 // Mock data cho pets (fallback nếu ví không có NFT)
 const mockPets = [
@@ -77,6 +78,8 @@ export function PushNFTs() {
   const itemsPerPage = 8;
 
   const { connected, metadata, address, balance, wallet } = useWalletContext();
+  const contract = usePlutusContract();
+  const contractAddress = contract?.validators?.[0]?.hash;
 
   const lockNft = async (nft: any) => {
     const asset: Asset[] = [
@@ -88,14 +91,15 @@ export function PushNFTs() {
     const utxos = await wallet.getUtxos();
     const walletAddress = (await wallet.getUsedAddresses())[0];
 
-    const { scriptAddr } = getScript();
+    // Thay vì lấy scriptAddr từ getScript(), dùng contractAddress
+    // const { scriptAddr } = getScript();
 
     // hash of the public key of the wallet, to be used in the datum
 
     // build transaction with MeshTxBuilder
     const txBuilder = getTxBuilder();
     await txBuilder
-      .txOut(scriptAddr, asset) // send assets to the script address
+      .txOut(contractAddress, asset) // send assets to the script address
       .txOutDatumHashValue(
         mConStr0([
           "dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c",

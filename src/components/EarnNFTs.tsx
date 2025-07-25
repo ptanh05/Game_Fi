@@ -14,8 +14,14 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useWalletContext } from "~/context/WalletContext";
-import { mConStr0, stringToHex } from "@meshsdk/core";
+import {
+  mConStr0,
+  stringToHex,
+  Transaction,
+  BlockfrostProvider,
+} from "@meshsdk/core";
 import { getScript, getTxBuilder, getUtxoByTxHash } from "~/contract/Contract";
+import { usePlutusContract } from "../hooks/usePlutusContract";
 
 // Ở đầu file EarnNFTs.tsx, sau các import khác
 async function updateNFTStatus(
@@ -122,28 +128,8 @@ const bannerData = [
   },
 ];
 
-async function fetchNFTsFromDB() {
-  const res = await fetch("/api/inventory/nfts_cache");
-  const data = await res.json();
-  // Giả sử data là mảng NFT, phân loại theo rarity
-  type NFTItem = {
-    name: string;
-    image: string;
-    txhash: string;
-    rarity: string;
-    type: string;
-  };
-  const pets: {
-    Legendary: NFTItem[];
-    Epic: NFTItem[];
-    Rare: NFTItem[];
-    Common: NFTItem[];
-  } = { Legendary: [], Epic: [], Rare: [], Common: [] };
-  data.forEach((nft: NFTItem) => {
-    if (pets[nft.rarity as keyof typeof pets]) pets[nft.rarity as keyof typeof pets].push(nft);
-  });
-  return pets;
-}
+// Địa chỉ contract lấy từ plutus.json (có thể fetch từ usePlutusContract)
+const BLOCKFROST_API_KEY = "previewxOC094xKrrjbuvWPhJ8bkiSoABW4jpDc";
 
 //////////////////////////////////////////
 // Wish Animation Component
@@ -170,7 +156,12 @@ function WishAnimation({
   onClose,
   rewards,
   onSubmit,
+  updateUserData,
+  userKeys,
+  userPity,
+  activeBanner,
 }: WishAnimationProps) {
+  console.log("[WishAnimation] rewards prop:", rewards);
   const [animationStage, setAnimationStage] = useState(0);
   const [currentRewardIndex, setCurrentRewardIndex] = useState(0);
   const [showSkip, setShowSkip] = useState(false);
@@ -1114,6 +1105,8 @@ export default function EarnNFTs() {
   const [currentRewards, setCurrentRewards] = useState<any[]>([]);
   const bannerRef = useRef<HTMLDivElement>(null);
   const { wallet, address } = useWalletContext();
+  const contract = usePlutusContract();
+  const contractAddress = contract?.validators?.[0]?.hash;
 
   const activeBanner =
     bannerData.find((banner) => banner.id === activeBannerId) || bannerData[0];
@@ -1132,7 +1125,7 @@ export default function EarnNFTs() {
             guaranteedEpic: data.pity_guaranteedEpic,
             guaranteedLegendary: data.pity_guaranteedLegendary,
           });
-          // Lấy lịch sử user
+          // Fetch lại lịch sử user
           fetch(`/api/inventory/user_history?user_address=${address}`)
             .then((res) => res.json())
             .then((history) => setUserHistory(history));
@@ -1154,10 +1147,11 @@ export default function EarnNFTs() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         address: address,
-        currentkeys: updatedData.keys,
-        pity_current: updatedData.pity.current,
-        pity_guaranteedEpic: updatedData.pity.guaranteedEpic,
-        pity_guaranteedLegendary: updatedData.pity.guaranteedLegendary,
+        currentkeys: Number(updatedData.keys) || 0,
+        pity_current: Number(updatedData.pity.current) || 0,
+        pity_guaranteedEpic: Number(updatedData.pity.guaranteedEpic) || 0,
+        pity_guaranteedLegendary:
+          Number(updatedData.pity.guaranteedLegendary) || 0,
       }),
     })
       .then((res) => res.json())
@@ -1189,80 +1183,24 @@ export default function EarnNFTs() {
       });
   };
 
-  const handleTransaction = async (txHashes: string[]) => {
-    await getNft(txHashes);
-  };
-
-  const getNft = async (txHashes: string[]) => {
-    const redeemer = "GameBlockChainNeverDie!";
-    const datum =
-      "dc703457ef9d14e1d77d050b158868b9ab9c59110f437474a3294b7d8b81051c";
-    const { scriptCbor } = getScript();
-    const txBuilder = getTxBuilder();
-    const utxos = await wallet.getUtxos();
-    console.debug("getNft called with txHashes:", txHashes);
-
-    for (const txHash of txHashes) {
-      const scriptUtxo = await getUtxoByTxHash(
-        "2e73d95671bc0f2904bbd68d0ae7e9d4c526df03428f048655c73aab99ffb387"
-      );
-      await txBuilder
-        .spendingPlutusScript("V3")
-        .txIn(
-          scriptUtxo.input.txHash,
-          scriptUtxo.input.outputIndex,
-          scriptUtxo.output.amount,
-          scriptUtxo.output.address
-        )
-        .txInScript(scriptCbor)
-        .txInDatumValue(mConStr0([datum]))
-        .txInRedeemerValue(mConStr0([stringToHex(redeemer)]));
-    }
-
-    const collateral = (await wallet.getCollateral())[0];
-    await txBuilder
-      .txInCollateral(
-        collateral.input.txHash,
-        collateral.input.outputIndex,
-        collateral.output.amount,
-        collateral.output.address
-      )
-      .changeAddress(address)
-      .selectUtxosFrom(utxos);
-
-    await txBuilder.complete();
-    const unsignedTx = txBuilder.txHex;
-    const signedTx = await wallet.signTx(unsignedTx);
-    const txHash = await wallet.submitTx(signedTx);
-  };
-
   // Function thực hiện wish
   const performWish = async (count: number) => {
     const cost = count * 16;
     if (userKeys >= cost) {
-      const pets = await fetchNFTsFromDB();
-
+      const pets = await fetchNFTsFromContract();
       const allItems = [
         ...pets.Legendary,
         ...pets.Epic,
         ...pets.Rare,
         ...pets.Common,
       ];
-
-      interface SelectedReward {
-        name: string;
-        image: string;
-        txhash: string;
-        rarity: string;
-        type: string;
-      }
-      const selectedRewards: SelectedReward[] = [];
+      console.log("pets object:", pets);
+      console.log("allItems:", allItems);
+      const selectedRewards: any[] = [];
       const newPity = { ...userPity };
-
       for (let i = 0; i < count && allItems.length > 0; i++) {
         newPity.current += 1;
         newPity.guaranteedEpic += 1;
-
         let rarity = "Common";
         if (newPity.current >= 90) {
           rarity = "Legendary";
@@ -1282,22 +1220,26 @@ export default function EarnNFTs() {
             rarity = "Rare";
           }
         }
-
-        const possibleItems = pets[rarity as keyof typeof pets];
-        if (possibleItems.length === 0) continue; // Tránh lỗi nếu rarity trống
-
+        let possibleItems = pets[rarity as keyof typeof pets];
+        // Nếu không có NFT ở rarity này, random từ tất cả NFT còn lại
+        if (!possibleItems || possibleItems.length === 0) {
+          possibleItems = [
+            ...pets.Legendary,
+            ...pets.Epic,
+            ...pets.Rare,
+            ...pets.Common,
+          ];
+        }
+        if (possibleItems.length === 0) continue;
         const randomIndex = Math.floor(Math.random() * possibleItems.length);
         const item = possibleItems.splice(randomIndex, 1)[0];
-
-        selectedRewards.push(item);
-        await updateNFTStatus(item.txhash, "processing"); // cập nhật trạng thái processing
+        selectedRewards.push(item as any);
+        await updateNFTStatus((item as any).txhash as string, "processing");
       }
-
-      setUserKeys(userKeys - cost);
-      setUserPity(newPity);
+      console.log("selectedRewards after random:", selectedRewards);
       setCurrentRewards(selectedRewards);
+      console.log("currentRewards set:", selectedRewards);
       setIsWishAnimationOpen(true);
-
       const newHistoryItems = selectedRewards.map((item) => ({
         id: new Date().getTime() + Math.random(),
         name: item.name,
@@ -1305,14 +1247,168 @@ export default function EarnNFTs() {
         rarity: item.rarity,
         date: new Date().toISOString(),
       }));
-
       updateUserDataOnServer(
         { keys: userKeys - cost, pity: newPity },
         newHistoryItems
       );
       setUserHistory((prevHistory) => [...newHistoryItems, ...prevHistory]);
+      // Fetch lại user từ API để đồng bộ UI với database
+      fetch(`/api/inventory/users`)
+        .then((res) => res.json())
+        .then((users) => {
+          const data = users.find((u: any) => u.address === address);
+          if (!data) return;
+          setUserKeys(data.currentkeys);
+          setUserPity({
+            current: data.pity_current,
+            guaranteedEpic: data.pity_guaranteedEpic,
+            guaranteedLegendary: data.pity_guaranteedLegendary,
+          });
+          // Fetch lại lịch sử user
+          fetch(`/api/inventory/user_history?user_address=${address}`)
+            .then((res) => res.json())
+            .then((history) => setUserHistory(history));
+        });
     }
   };
+
+  // Hàm nhận NFT từ contract (on-chain + backend)
+  const getNft = async (txHashes: string[]) => {
+    if (!wallet) {
+      alert("Bạn cần kết nối ví Cardano!");
+      return;
+    }
+    if (!contract?.validators?.[0]?.hash) {
+      alert("Không tìm thấy contract address!");
+      return;
+    }
+    const compiledCode = contract.validators[0].compiledCode;
+    for (const txHash of txHashes) {
+      // 1. Lấy UTXO NFT từ contract address (giả sử txHash là UTXO của NFT trên contract)
+      const nftUtxo = await getUtxoByTxHash(txHash); // cần đảm bảo trả về đúng UTXO
+      // 2. Build datum/redeemer đúng schema
+      const redeemer = { action: "Buy" };
+      // 3. Build transaction nhận NFT từ contract
+      const tx: any = new Transaction({ initiator: wallet });
+      tx.redeemValue({
+        script: { type: "PlutusV2", code: compiledCode },
+        utxo: nftUtxo,
+        redeemer: redeemer,
+      });
+      tx.sendAssets({
+        address: address,
+        assets: [
+          {
+            unit:
+              nftUtxo.output.amount?.find((a: any) => a.unit !== "lovelace")
+                ?.unit || "",
+            quantity: "1",
+          },
+        ],
+      });
+      const unsignedTx: any = await tx.build();
+      const signedTx: any = await wallet.signTx(unsignedTx);
+      const txHashResult: any = await wallet.submitTx(signedTx);
+      // 4. Gọi API backend cập nhật trạng thái NFT
+      await fetch("/api/inventory/nfts_cache", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          txhash: txHash,
+          status: 2, // Đã nhận về ví
+          ownerAddress: address,
+        }),
+      });
+      // 5. Gọi API user_history để lưu lịch sử nhận thưởng
+      const nftAsset = nftUtxo.output.amount.find(
+        (a: any) => a.unit !== "lovelace"
+      );
+      const assetMeta = await new BlockfrostProvider(
+        BLOCKFROST_API_KEY
+      ).fetchAssetMetadata(nftAsset.unit);
+      await fetch("/api/inventory/user_history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_address: address,
+          name: assetMeta.name || "NFT",
+          type: assetMeta.type || "default",
+          rarity: assetMeta.rarity || "Common",
+          date: new Date().toISOString(),
+        }),
+      });
+    }
+  };
+
+  // Hàm fetch NFT UTXO trực tiếp từ contract address trên blockchain
+  async function fetchNFTsFromContract() {
+    if (!contractAddress) {
+      console.warn("Không tìm thấy contract address!");
+      return { Legendary: [], Epic: [], Rare: [], Common: [] };
+    }
+    const provider = new BlockfrostProvider(BLOCKFROST_API_KEY);
+    const utxos = await provider.fetchAddressUTxOs(contractAddress);
+    console.log("[Wish] UTXO count at contract:", utxos.length);
+    const pets: Record<string, any[]> = {
+      Legendary: [],
+      Epic: [],
+      Rare: [],
+      Common: [],
+    };
+    let totalNFTs = 0;
+    for (const utxo of utxos) {
+      const nftAsset = utxo.output.amount.find(
+        (a: any) => a.unit !== "lovelace"
+      );
+      if (!nftAsset) continue;
+      const asset = await provider.fetchAssetMetadata(nftAsset.unit);
+      let rarity = asset.rarity || "Common";
+      if (!pets[rarity]) rarity = "Common";
+      pets[rarity].push({
+        name: asset.name,
+        unit: nftAsset.unit,
+        image: asset.image,
+        rarity: rarity,
+        policyId: asset.policyId,
+        assetName: asset.assetName,
+        txhash: utxo.input.txHash,
+        utxo: utxo,
+        price: asset.price || 0,
+        ATK: asset.atk,
+        ATKSpeed: asset.atkspeed,
+        MPConsume: asset.mpconsume,
+        CritRate: asset.critrate,
+        Rechargeable: asset.rechargeable,
+        MultiShoot: asset.multishoot,
+        Category: asset.type,
+      });
+      totalNFTs++;
+      console.log(`[Wish] NFT found:`, {
+        unit: nftAsset.unit,
+        name: asset.name,
+        rarity,
+        metadata: asset,
+        txhash: utxo.input.txHash,
+      });
+    }
+    console.log(`[Wish] Total NFTs found:`, totalNFTs);
+    console.log(
+      `[Wish] Legendary:`,
+      pets.Legendary.length,
+      "Epic:",
+      pets.Epic.length,
+      "Rare:",
+      pets.Rare.length,
+      "Common:",
+      pets.Common.length
+    );
+    if (totalNFTs === 0) {
+      console.warn(
+        "[Wish] Không có NFT nào trên contract address! Hãy gửi NFT vào contract trước khi quay."
+      );
+    }
+    return pets;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -1662,7 +1758,7 @@ export default function EarnNFTs() {
         isOpen={isWishAnimationOpen}
         onClose={() => setIsWishAnimationOpen(false)}
         rewards={currentRewards}
-        onSubmit={handleTransaction}
+        onSubmit={getNft}
         updateUserData={updateUserDataOnServer} // truyền hàm update
         userKeys={userKeys} // truyền biến userKeys
         userPity={userPity}

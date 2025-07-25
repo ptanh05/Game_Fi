@@ -11,7 +11,7 @@
   "dependencies": {
     "@harmoniclabs/pair": "^1.0.0",
     "@meshsdk/contract": "^1.8.14",
-    "@meshsdk/core": "1.8.14",
+    "@meshsdk/core": "^1.8.14",
     "@meshsdk/react": "^1.7.20",
     "@types/cors": "^2.8.17",
     "cors": "^2.8.5",
@@ -31,7 +31,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/luxon": "^3.6.2",
-    "@types/node": "^20",
+    "@types/node": "^20.19.9",
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
